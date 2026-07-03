@@ -16,12 +16,17 @@ api/dist/
 primer/**/backend/bin/
 primer/**/backend/.env
 
-# Gradle / Kotlin / Android (primer/ client)
+# Gradle / Kotlin / Android (primer/ client, and our own client/)
 primer/**/client/.gradle/
 primer/**/client/**/build/
 primer/**/client/local.properties
 primer/**/client/kotlin-js-store/
 primer/**/client/*.hprof
+client/.gradle/
+client/**/build/
+client/local.properties
+client/kotlin-js-store/
+client/*.hprof
 .kotlin/
 
 # Xcode (primer/ client/iosApp)
