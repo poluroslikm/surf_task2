@@ -1,0 +1,83 @@
+# Схемы и security scheme домена auth.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-token
+      description: >-
+        Токен, выданный register/login. Передаётся в заголовке Authorization
+        всеми запросами, кроме auth/register и auth/login. Механизм хранения
+        и формат токена (сессия/JWT) не заданы заказчиком и остаются на
+        усмотрение реализации (NFR-7) — здесь фиксируется только контракт
+        использования.
+
+  schemas:
+    RegisterRequest:
+      type: object
+      description: Запрос на регистрацию (FR-1).
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: client@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: >-
+            Минимальная длина 8 символов — допущение дизайнера
+            (`3-design-brief/SCR-001-auth.md` §6.3); точная политика пароля
+            заказчиком не задана (NFR-7).
+          example: '••••••••'
+
+    LoginRequest:
+      type: object
+      description: Запрос на вход (FR-2).
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: client@example.com
+        password:
+          type: string
+          format: password
+          example: '••••••••'
+
+    Client:
+      type: object
+      description: Данные клиента, возвращаемые при регистрации/входе.
+      required:
+        - id
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      description: Ответ на успешную регистрацию/вход — токен и данные клиента.
+      required:
+        - token
+        - client
+      properties:
+        token:
+          type: string
+          description: Токен доступа для заголовка Authorization последующих запросов.
+        client:
+          $ref: '#/components/schemas/Client'

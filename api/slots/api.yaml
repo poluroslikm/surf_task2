@@ -1,0 +1,79 @@
+openapi: 3.0.3
+
+info:
+  title: «Шеф-стол» API — Slots
+  description: >-
+    Список и карточка кулинарных классов (слотов). Read-only для клиента:
+    слоты, программы и шефы создаются и редактируются в существующей
+    инфраструктуре (02-domain.md → «Границы скоупа»).
+  version: 1.0.0
+
+servers:
+  - url: https://api.chef-stol.example/v1
+    description: Production
+  - url: https://staging-api.chef-stol.example/v1
+    description: Staging
+
+tags:
+  - name: Slots
+    description: Классы (слоты)
+
+security:
+  - bearerAuth: []
+
+paths:
+  /slots:
+    get:
+      tags:
+        - Slots
+      summary: Список слотов
+      operationId: listSlots
+      description: >-
+        Список классов за период (SCR-002, UC-3). По умолчанию — ближайшие
+        7 дней от текущего момента (FR-3, R-027), отсортированы по start_at
+        по возрастанию. Более длинный период — через date_from/date_to
+        (FR-4, BS-001). Заполненные и отменённые студией слоты **не
+        скрываются** — возвращаются с соответствующим free_seats=0 / status
+        (FR-6a, FR-18); клиент решает, как их показать.
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/DateFromParam'
+        - $ref: '../common/models.yaml#/components/parameters/DateToParam'
+      responses:
+        '200':
+          description: Список слотов
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/SlotListResponse'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /slots/{slotId}:
+    get:
+      tags:
+        - Slots
+      summary: Детали слота
+      operationId: getSlot
+      description: Полные данные слота с вложенными program/chef для карточки (SCR-003).
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/SlotIdParam'
+      responses:
+        '200':
+          description: Детали слота
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/Slot'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common/models.yaml#/components/responses/NotFound'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '../auth/models.yaml#/components/securitySchemes/bearerAuth'

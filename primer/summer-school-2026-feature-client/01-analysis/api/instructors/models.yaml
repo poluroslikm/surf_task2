@@ -1,0 +1,98 @@
+# Маршрут и инструктор — справочные объекты (read-only) + список инструкторов.
+# Ссылки: '#/components/schemas/...' — внутри файла; '../common/...' — на сквозные объекты.
+
+components:
+  schemas:
+    RouteType:
+      type: string
+      description: Тип маршрута — новичковый (novice) или опытный (experienced).
+      enum:
+        - novice
+        - experienced
+
+    Geometry:
+      description: Геометрия маршрута для отрисовки линии на карте Яндекс.
+      oneOf:
+        - type: array
+          description: Массив координат точек маршрута.
+          items:
+            type: array
+            description: Координата в виде пары [lat, lng].
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+        - type: string
+          description: Закодированная полилиния (encoded polyline).
+
+    Route:
+      type: object
+      description: Маршрут прогулки. Справочник, доступен только для чтения.
+      required:
+        - id
+        - name
+        - type
+        - capacity_cap
+        - duration_min
+        - geometry
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор маршрута.
+        name:
+          type: string
+          description: Название маршрута.
+          example: Острова и каналы
+        description:
+          type: string
+          nullable: true
+          description: >-
+            Описательный текст маршрута/прогулки для карточки слота (SCR-003, RR-D07).
+            Опционально; может отсутствовать или быть null.
+          example: >-
+            Спокойная прогулка по тихим каналам и протокам между островами — отлично
+            подойдёт новичкам.
+        type:
+          $ref: '#/components/schemas/RouteType'
+        capacity_cap:
+          type: integer
+          description: Потолок числа мест на маршруте. Новичковый — не более 8, опытный — не более 12.
+          example: 8
+        duration_min:
+          type: integer
+          description: Продолжительность прогулки в минутах (обычно 90-120).
+          example: 90
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+
+    Instructor:
+      type: object
+      description: Инструктор, ведущий прогулку.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор инструктора.
+        name:
+          type: string
+          description: Имя инструктора.
+          example: Мария
+
+    InstructorListResponse:
+      type: object
+      description: Постраничный список инструкторов (справочник для фильтра, BS-001).
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          description: Элементы списка инструкторов.
+          items:
+            $ref: '#/components/schemas/Instructor'
+        meta:
+          $ref: '../common/models.yaml#/components/schemas/PaginationMeta'

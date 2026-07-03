@@ -1,0 +1,137 @@
+# Слоты (классы) и справочные вложенные объекты (Program, Chef).
+# Program/Chef не имеют собственных top-level эндпоинтов — клиент видит их
+# только в составе Slot (см. 02-domain.md, FR-6/FR-6a; в отличие от похожих
+# проектов, где инструктор/маршрут — самостоятельно просматриваемые сущности).
+
+components:
+  schemas:
+    ProgramDifficulty:
+      type: string
+      description: Уровень сложности программы — явное поле (FR-6, Q-004).
+      enum:
+        - novice
+        - experienced
+
+    Program:
+      type: object
+      description: Программа/меню класса (справочные данные, read-only, FR-6).
+      required:
+        - id
+        - name
+        - difficulty
+        - photo_url
+        - ingredients
+        - allergens
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Паста ручной работы
+        difficulty:
+          $ref: '#/components/schemas/ProgramDifficulty'
+        photo_url:
+          type: string
+          format: uri
+        ingredients:
+          type: array
+          description: Список ингредиентов блюда (Q-003).
+          items:
+            type: string
+          example: [мука, яйца, пармезан]
+        allergens:
+          type: array
+          description: >-
+            Список аллергенов блюда — состав самого блюда, не данные об
+            аллергиях клиента (сбор аллергий клиента вне скоупа, 02-domain.md).
+          items:
+            type: string
+          example: [глютен, лактоза]
+
+    Chef:
+      type: object
+      description: Шеф, ведущий класс (справочные данные, read-only, FR-6).
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Анна Ковалёва
+
+    SlotStatus:
+      type: string
+      description: >-
+        Статус слота. cancelled — класс отменён студией (форс-мажор или
+        решение организатора, FR-17); повторная запись на такой слот
+        запрещена всем клиентам (FR-18).
+      enum:
+        - scheduled
+        - cancelled
+
+    Slot:
+      type: object
+      description: Класс/слот — полные данные для карточки (SCR-003) и списка (SCR-002).
+      required:
+        - id
+        - program
+        - chef
+        - start_at
+        - total_seats
+        - free_seats
+        - price
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        program:
+          $ref: '#/components/schemas/Program'
+        chef:
+          $ref: '#/components/schemas/Chef'
+        start_at:
+          type: string
+          format: date-time
+          description: Дата/время начала в UTC; клиент отображает в локальном времени студии.
+        total_seats:
+          type: integer
+          description: >-
+            Всего мест. Лимит (8 для классов со сложным оборудованием, 12 —
+            общий потолок студии) — бизнес-правило бэкенда; клиент получает
+            уже готовое число, не пересчитывает и не хардкодит (FR-12).
+          example: 8
+        free_seats:
+          type: integer
+          description: Свободно мест — значение строго из API (FR-12, US-8).
+          example: 4
+        price:
+          type: integer
+          description: Цена класса, в рублях (RUB).
+          example: 2500
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+        cancellation_reason:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Причина отмены студией. Заполнено только при status=cancelled (FR-17).
+          example: Поломка оборудования
+
+    SlotListResponse:
+      type: object
+      description: >-
+        Список слотов за период (SCR-002). Без пагинации: окно по умолчанию —
+        7 дней (FR-3, R-027), более длинный период задаётся явным диапазоном
+        дат (FR-4) — объём выдачи остаётся небольшим, отдельная пагинация не
+        требуется ни одним FR/NFR.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'

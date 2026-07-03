@@ -1,0 +1,183 @@
+# Слот (сеанс прогулки) — read-only-проекция и его представления.
+# Ссылки: '#/components/schemas/...' — внутри файла;
+# '../instructors/...' и '../common/...' — на соседние домены.
+
+components:
+  schemas:
+    SlotStatus:
+      type: string
+      description: Статус слота.
+      enum:
+        - scheduled
+        - cancelled
+
+    Slot:
+      type: object
+      description: >-
+        Полная карточка слота (конкретный сеанс прогулки на дату/время). Доступен
+        только для чтения. Статус «Прошедшая» — производное значение по полю start_at,
+        отдельным статусом не хранится.
+
+
+        Доступность (R-003): максимально доступное к брони число мест
+        max_seats = min(free_seats, route.capacity_cap, 3). Число прокатных досок в
+        брони ограничено: rental_count ≤ free_rental_boards. Клиент со своей доской
+        занимает место (free_seats), но не расходует прокатный фонд
+        (free_rental_boards).
+
+
+        Цены (R-010): price — тариф за место, rental_price — отдельный тариф проката
+        за доску, оба в рублях (валюта RUB). Итоговая цена брони производная =
+        price·seats_count + rental_price·rental_count.
+
+
+        Инварианты: free_seats ≤ total_seats; счётчики (free_seats, free_rental_boards,
+        total_seats) и цены (price, rental_price) неотрицательны.
+      required:
+        - id
+        - start_at
+        - route
+        - instructor
+        - total_seats
+        - free_seats
+        - free_rental_boards
+        - price
+        - rental_price
+        - meeting_point
+        - meeting_point_lat
+        - meeting_point_lng
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор слота.
+        start_at:
+          type: string
+          format: date-time
+          description: Дата и время начала прогулки.
+        route:
+          $ref: '../instructors/models.yaml#/components/schemas/Route'
+        instructor:
+          $ref: '../instructors/models.yaml#/components/schemas/Instructor'
+        total_seats:
+          type: integer
+          minimum: 1
+          description: Общее число мест в слоте.
+          example: 8
+        free_seats:
+          type: integer
+          minimum: 0
+          description: >-
+            Число свободных мест (расчётное). Своя доска клиента тоже занимает место.
+            К брони доступно max_seats = min(free_seats, route.capacity_cap, 3), R-003.
+          example: 5
+        free_rental_boards:
+          type: integer
+          minimum: 0
+          description: >-
+            Число свободных прокатных досок из общего фонда (расчётное). Ограничивает
+            rental_count в брони (rental_count ≤ free_rental_boards). Своя доска фонд
+            не расходует, R-003.
+          example: 7
+        price:
+          type: integer
+          minimum: 0
+          description: Цена за одно место, в рублях (целое число, валюта RUB).
+          example: 2500
+        rental_price:
+          type: integer
+          minimum: 0
+          description: Тариф проката за одну доску, в рублях (целое число, валюта RUB).
+          example: 800
+        meeting_point:
+          type: string
+          description: Адрес или ориентир места встречи.
+          example: Лодочная станция у Елагина моста
+        meeting_point_lat:
+          type: number
+          format: float
+          description: Широта места встречи.
+          example: 59.978
+        meeting_point_lng:
+          type: number
+          format: float
+          description: Долгота места встречи.
+          example: 30.262
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+
+    SlotSummary:
+      type: object
+      description: Урезанное представление слота для списка (SCR-002).
+      required:
+        - id
+        - start_at
+        - route
+        - instructor
+        - price
+        - rental_price
+        - total_seats
+        - free_seats
+        - free_rental_boards
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор слота.
+        start_at:
+          type: string
+          format: date-time
+          description: Дата и время начала прогулки.
+        route:
+          $ref: '../instructors/models.yaml#/components/schemas/Route'
+        instructor:
+          $ref: '../instructors/models.yaml#/components/schemas/Instructor'
+        price:
+          type: integer
+          minimum: 0
+          description: Цена за одно место, в рублях (целое число, валюта RUB).
+          example: 2500
+        rental_price:
+          type: integer
+          minimum: 0
+          description: Тариф проката за одну доску, в рублях (целое число, валюта RUB).
+          example: 800
+        total_seats:
+          type: integer
+          minimum: 1
+          description: Общее число мест в слоте.
+          example: 8
+        free_seats:
+          type: integer
+          minimum: 0
+          description: >-
+            Число свободных мест (расчётное). Своя доска клиента тоже занимает место.
+            К брони доступно max_seats = min(free_seats, route.capacity_cap, 3), R-003.
+          example: 5
+        free_rental_boards:
+          type: integer
+          minimum: 0
+          description: >-
+            Число свободных прокатных досок из общего фонда (расчётное). Ограничивает
+            rental_count в брони (rental_count ≤ free_rental_boards). Своя доска фонд
+            не расходует, R-003.
+          example: 7
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+
+    SlotListResponse:
+      type: object
+      description: Постраничный список слотов (SCR-002).
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          description: Элементы списка слотов.
+          items:
+            $ref: '#/components/schemas/SlotSummary'
+        meta:
+          $ref: '../common/models.yaml#/components/schemas/PaginationMeta'

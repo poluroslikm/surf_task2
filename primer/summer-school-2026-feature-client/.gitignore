@@ -1,0 +1,18 @@
+.claude
+.DS_Store
+01-analysis/api/dist/
+01-analysis/api/node_modules/
+01-analysis/api/package-lock.json
+backend/bin/
+backend/.env
+client/.gradle/
+client/build/
+client/**/build/
+client/local.properties
+client/kotlin-js-store/
+client/java_pid*.hprof
+
+# Секреты доступа (токен Figma и пр.) — никогда не коммитим
+.env
+.env.*
+

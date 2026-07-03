@@ -1,0 +1,49 @@
+openapi: 3.0.3
+
+info:
+  title: Сапбординг-клуб API — Instructors
+  description: >-
+    Справочник инструкторов (read-only) для фильтра по инструктору. Часть
+    клиентского API сервиса записи на сапбординг-прогулки.
+  version: 1.0.0
+
+servers:
+  - url: https://api.supclub.example/v1
+    description: Production — продакшен-окружение
+  - url: https://staging-api.supclub.example/v1
+    description: Staging — тестовое окружение
+
+tags:
+  - name: Instructors
+    description: Справочник инструкторов
+
+security:
+  - bearerAuth: []
+
+paths:
+  /instructors:
+    get:
+      tags:
+        - Instructors
+      summary: Справочник инструкторов
+      operationId: listInstructors
+      description: Список инструкторов для фильтра по инструктору (BS-001). Read-only справочник.
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/LimitParam'
+        - $ref: '../common/models.yaml#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Список инструкторов
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/InstructorListResponse'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '../auth/models.yaml#/components/securitySchemes/bearerAuth'

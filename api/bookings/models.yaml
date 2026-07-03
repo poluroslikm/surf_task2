@@ -1,0 +1,182 @@
+# Запись (бронь) и её представления, включая вложенную оценку шефа.
+# Ссылки: '#/components/schemas/...' — внутри файла;
+# '../slots/...' и '../common/...' — на соседние домены.
+
+components:
+  schemas:
+    BookingStatus:
+      type: string
+      description: >-
+        Статус записи. late_cancel — поздняя отмена (менее 24 часов до
+        начала): место НЕ освобождается, штрафов нет (FR-16). cancelled_by_studio
+        — класс отменён студией (Slot.status=cancelled), запись отменена не
+        по инициативе клиента (FR-17); повторная запись на этот слот
+        запрещена (FR-18).
+      enum:
+        - active
+        - cancelled
+        - late_cancel
+        - cancelled_by_studio
+
+    EquipmentChoice:
+      type: string
+      description: >-
+        Вариант экипировки на всю запись (FR-8). rental никогда не
+        отклоняется по нехватке фонда — прокатный фонд не лимитирован (FR-9).
+      enum:
+        - own
+        - rental
+
+    CreateBookingRequest:
+      type: object
+      description: Запрос на создание записи (SCR-004). Одна запись — одно место (FR-7).
+      required:
+        - slot_id
+        - equipment_choice
+      properties:
+        slot_id:
+          type: string
+          format: uuid
+        equipment_choice:
+          $ref: '#/components/schemas/EquipmentChoice'
+
+    Rating:
+      type: object
+      description: Оценка шефа по записи (FR-19). Не более одной на запись (FR-20, UC-4 E2).
+      required:
+        - stars
+        - created_at
+      properties:
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          nullable: true
+          description: Опциональный текстовый комментарий (FR-19).
+          example: Было очень вкусно и понятно объяснили!
+        created_at:
+          type: string
+          format: date-time
+
+    SubmitRatingRequest:
+      type: object
+      description: Запрос на отправку оценки шефа (SCR-007).
+      required:
+        - stars
+      properties:
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+
+    Booking:
+      type: object
+      description: Полные данные записи для экрана деталей (SCR-006).
+      required:
+        - id
+        - slot_id
+        - client_id
+        - equipment_choice
+        - status
+        - price_total
+        - free_cancellation_until
+        - created_at
+        - slot
+      properties:
+        id:
+          type: string
+          format: uuid
+        slot_id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        equipment_choice:
+          $ref: '#/components/schemas/EquipmentChoice'
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        price_total:
+          type: integer
+          readOnly: true
+          description: >-
+            Цена, зафиксированная на момент записи (= slot.price на момент
+            создания), в рублях. Клиент не пересчитывает (FR-23).
+          example: 2500
+        free_cancellation_until:
+          type: string
+          format: date-time
+          readOnly: true
+          description: >-
+            Момент, до которого отмена бесплатна (= slot.start_at − 24ч),
+            вычисляется сервером. Клиент только отображает значение, не
+            вычисляет самостоятельно (FR-15, FR-16; устраняет клиентский
+            пересчёт порога, см. `3-design-brief/SCR-006-booking-details.md`).
+        rating:
+          $ref: '#/components/schemas/Rating'
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        slot:
+          $ref: '../slots/models.yaml#/components/schemas/Slot'
+
+    BookingSummary:
+      type: object
+      description: Урезанное представление записи для списка (SCR-005).
+      required:
+        - id
+        - slot_id
+        - equipment_choice
+        - status
+        - price_total
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        slot_id:
+          type: string
+          format: uuid
+        equipment_choice:
+          $ref: '#/components/schemas/EquipmentChoice'
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        price_total:
+          type: integer
+          readOnly: true
+          example: 2500
+        created_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        slot:
+          $ref: '../slots/models.yaml#/components/schemas/Slot'
+
+    BookingListResponse:
+      type: object
+      description: >-
+        Список записей клиента (SCR-005), все статусы (активные, отменённые,
+        прошедшие) — без пагинации; отдельная выдача по статусу не требуется
+        ни одним FR (в отличие от похожих проектов с более крупным объёмом
+        истории).
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingSummary'

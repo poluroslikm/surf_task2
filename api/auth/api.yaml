@@ -1,0 +1,111 @@
+openapi: 3.0.3
+
+info:
+  title: «Шеф-стол» API — Auth
+  description: >-
+    Регистрация, вход и выход клиента по email и паролю (FR-1, FR-2, Q-008).
+    Часть клиентского API кулинарной студии «Шеф-стол».
+  version: 1.0.0
+
+servers:
+  - url: https://api.chef-stol.example/v1
+    description: Production
+  - url: https://staging-api.chef-stol.example/v1
+    description: Staging
+
+tags:
+  - name: Auth
+    description: Регистрация, вход, выход
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Зарегистрироваться
+      operationId: register
+      description: Регистрация нового клиента по email и паролю (FR-1, SCR-001).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Клиент зарегистрирован, выдан токен
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/AuthResponse'
+        '400':
+          $ref: '../common/models.yaml#/components/responses/BadRequest'
+        '409':
+          description: Email уже зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '../common/models.yaml#/components/schemas/Error'
+              example:
+                code: bad_request
+                message: Этот email уже зарегистрирован.
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Войти
+      operationId: login
+      description: Вход существующего клиента по email и паролю (FR-2, SCR-001).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Вход выполнен, выдан токен
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/AuthResponse'
+        '400':
+          $ref: '../common/models.yaml#/components/responses/BadRequest'
+        '401':
+          description: Неверный email или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '../common/models.yaml#/components/schemas/Error'
+              example:
+                code: unauthorized
+                message: Неверный email или пароль.
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Выйти из аккаунта
+      operationId: logout
+      description: >-
+        Завершение текущей сессии (BS-004 «Аккаунт / выход» — минимальная
+        необходимость, вытекающая из наличия входа, не отдельное FR).
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Сессия завершена
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './models.yaml#/components/securitySchemes/bearerAuth'

@@ -1,0 +1,185 @@
+# Сквозные объекты: общая схема ошибки и типовые ответы-ошибки.
+# Ссылки внутри файла: '#/components/<секция>/<Имя>'.
+# У этого API нет постраничных списков (список слотов ограничен окном 7 дней,
+# R-027; список бронирований клиента для MVP не пагинируется — не заявлено ни
+# одним FR/NFR) и нет query-фильтров с множественным выбором — поэтому здесь
+# нет PaginationMeta и style=form/explode параметров, в отличие от похожих
+# проектов с более крупным каталогом.
+
+components:
+  schemas:
+    Error:
+      type: object
+      description: Стандартное тело ошибки.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: >-
+            Канонический машинный код ошибки. Доменные коды: slot_full (нет
+            свободных мест), slot_cancelled (слот отменён студией), slot_started
+            (слот уже стартовал — отмена/оценка недоступны), already_cancelled
+            (повторная отмена), not_ratable (запись не подходит под условия
+            оценки — не прошла или отменена), already_rated (оценка уже
+            поставлена). Транспортные/общие: bad_request (400), unauthorized
+            (401), forbidden (403), not_found (404), internal_error (5xx).
+          enum:
+            - slot_full
+            - slot_cancelled
+            - slot_started
+            - already_cancelled
+            - not_ratable
+            - already_rated
+            - bad_request
+            - unauthorized
+            - forbidden
+            - not_found
+            - internal_error
+          example: slot_full
+        message:
+          type: string
+          description: Человекочитаемое сообщение об ошибке.
+          example: Свободных мест больше нет.
+        details:
+          type: object
+          description: >-
+            Необязательные машиночитаемые детали для динамических сообщений на
+            клиенте (00-foundations.md §6): например, актуальное число свободных
+            мест для slot_full, чтобы показать «Мест больше нет» без разбора
+            текста message.
+          properties:
+            available_seats:
+              type: integer
+              description: Сколько мест реально свободно на момент ошибки (для slot_full).
+              example: 0
+
+  parameters:
+    SlotIdParam:
+      in: path
+      name: slotId
+      required: true
+      description: Идентификатор слота
+      schema:
+        type: string
+        format: uuid
+
+    BookingIdParam:
+      in: path
+      name: bookingId
+      required: true
+      description: Идентификатор бронирования
+      schema:
+        type: string
+        format: uuid
+
+    DateFromParam:
+      in: query
+      name: date_from
+      required: false
+      description: >-
+        Фильтр: слоты со стартом не раньше указанного момента (граница
+        включительна). По умолчанию — текущий момент (FR-3, R-027).
+      schema:
+        type: string
+        format: date-time
+
+    DateToParam:
+      in: query
+      name: date_to
+      required: false
+      description: >-
+        Фильтр: слоты со стартом не позже указанного момента (граница
+        включительна). По умолчанию — date_from + 7 дней (FR-3, R-027). Более
+        длинный период задаётся явным значением (FR-4, BS-001).
+      schema:
+        type: string
+        format: date-time
+
+  responses:
+    BadRequest:
+      description: Неверные параметры запроса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: bad_request
+            message: Неверные параметры запроса. Проверьте корректность переданных значений.
+
+    Unauthorized:
+      description: Отсутствует или неверен токен авторизации.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: unauthorized
+            message: Требуется авторизация. Передайте действительный токен в заголовке Authorization.
+
+    Forbidden:
+      description: Попытка доступа к чужим данным.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: forbidden
+            message: Доступ запрещён. Вы не можете обращаться к данным другого клиента.
+
+    NotFound:
+      description: Запрашиваемый ресурс не найден.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: not_found
+            message: Запрашиваемый ресурс не найден.
+
+    Conflict:
+      description: >-
+        Нарушение инварианта — нет свободных мест (slot_full), повторная
+        отмена (already_cancelled) или повторная оценка (already_rated).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: slot_full
+            message: На выбранном слоте не осталось свободных мест.
+            details:
+              available_seats: 0
+
+    Gone:
+      description: Слот отменён студией (status=cancelled).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: slot_cancelled
+            message: Класс отменён студией и более недоступен для записи.
+
+    UnprocessableEntity:
+      description: >-
+        Операция невозможна по бизнес-правилу — слот уже стартовал (отмена
+        или оценка) либо запись не подходит под условия оценки.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: slot_started
+            message: Класс уже начался, операция недоступна.
+
+    InternalError:
+      description: Внутренняя ошибка сервиса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: internal_error
+            message: Что-то пошло не так. Попробуйте ещё раз позже.

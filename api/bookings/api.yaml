@@ -1,0 +1,197 @@
+openapi: 3.0.3
+
+info:
+  title: «Шеф-стол» API — Bookings
+  description: >-
+    Записи клиента: создание, список, детали, отмена и оценка шефа. Часть
+    клиентского API кулинарной студии «Шеф-стол».
+  version: 1.0.0
+
+servers:
+  - url: https://api.chef-stol.example/v1
+    description: Production
+  - url: https://staging-api.chef-stol.example/v1
+    description: Staging
+
+tags:
+  - name: Bookings
+    description: Записи
+
+security:
+  - bearerAuth: []
+
+paths:
+  /bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Создать запись
+      operationId: createBooking
+      description: >-
+        Запись на слот (SCR-004, UC-1). Одна запись — одно место (FR-7).
+        Итоговую цену (price_total = slot.price на момент записи) и
+        free_cancellation_until считает сервер. Операция атомарна — овербукинг
+        и двойная запись исключены (NFR-6).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Запись создана
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/Booking'
+        '400':
+          $ref: '../common/models.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../common/models.yaml#/components/responses/Conflict'
+        '410':
+          $ref: '../common/models.yaml#/components/responses/Gone'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+    get:
+      tags:
+        - Bookings
+      summary: Мои записи
+      operationId: listBookings
+      description: >-
+        Список записей текущего клиента (SCR-005), все статусы, включая
+        отменённые. Сортировка по slot.start_at по убыванию (ближайшие/
+        последние сверху). Группировка «Предстоящие»/«Прошедшие» — на клиенте,
+        по slot.start_at относительно текущего момента (это допущение
+        дизайнера, см. `3-design-brief/SCR-005-my-bookings.md`).
+      responses:
+        '200':
+          description: Список записей клиента
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/BookingListResponse'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: Детали записи
+      operationId: getBooking
+      description: Полные данные записи с вложенным слотом для экрана деталей (SCR-006).
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/BookingIdParam'
+      responses:
+        '200':
+          description: Детали записи
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/Booking'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common/models.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../common/models.yaml#/components/responses/NotFound'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /bookings/{bookingId}/cancel:
+    post:
+      tags:
+        - Bookings
+      summary: Отменить запись
+      operationId: cancelBooking
+      description: >-
+        Отмена записи целиком (SCR-006/BS-003, UC-2). Сервер определяет тип
+        по времени до старта: ≥24ч → cancelled (место возвращается в слот);
+        <24ч → late_cancel (не возвращается, штрафов нет). Отмена недоступна
+        после начала класса.
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/BookingIdParam'
+      responses:
+        '200':
+          description: Запись отменена; status = cancelled или late_cancel, заполнено cancelled_at
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/Booking'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common/models.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../common/models.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../common/models.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../common/models.yaml#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+  /bookings/{bookingId}/rating:
+    post:
+      tags:
+        - Bookings
+      summary: Оценить шефа
+      operationId: submitRating
+      description: >-
+        Оценка шефа по прошедшей неотменённой записи (SCR-007, UC-4). Доступно
+        только если slot.start_at в прошлом, booking.status = active и оценка
+        ещё не поставлена (FR-20). Редактирование ранее поставленной оценки
+        не предусмотрено (допущение по умолчанию, UC-4 E2).
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/BookingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/SubmitRatingRequest'
+      responses:
+        '200':
+          description: Оценка сохранена, поле rating заполнено
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/Booking'
+        '400':
+          $ref: '../common/models.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common/models.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../common/models.yaml#/components/responses/NotFound'
+        '409':
+          description: Оценка уже поставлена
+          content:
+            application/json:
+              schema:
+                $ref: '../common/models.yaml#/components/schemas/Error'
+              example:
+                code: already_rated
+                message: Вы уже оценили этот класс.
+        '422':
+          description: Запись не подходит под условия оценки (не прошла или отменена)
+          content:
+            application/json:
+              schema:
+                $ref: '../common/models.yaml#/components/schemas/Error'
+              example:
+                code: not_ratable
+                message: Оценка доступна только для прошедших неотменённых записей.
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '../auth/models.yaml#/components/securitySchemes/bearerAuth'

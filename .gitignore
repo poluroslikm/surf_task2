@@ -1,0 +1,43 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+*.iml
+.vscode/
+
+# Node (api/ OpenAPI tooling)
+node_modules/
+package-lock.json
+api/dist/
+
+# Go (primer/ backend)
+primer/**/backend/bin/
+primer/**/backend/.env
+
+# Gradle / Kotlin / Android (primer/ client)
+primer/**/client/.gradle/
+primer/**/client/**/build/
+primer/**/client/local.properties
+primer/**/client/kotlin-js-store/
+primer/**/client/*.hprof
+.kotlin/
+
+# Xcode (primer/ client/iosApp)
+primer/**/iosApp/build/
+primer/**/iosApp/DerivedData/
+primer/**/iosApp/xcuserdata/
+*.xcuserstate
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.defaults
