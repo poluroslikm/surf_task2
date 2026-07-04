@@ -58,8 +58,8 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
         <div className="slots-header__row">
           <h1>Классы</h1>
           <div className="slots-header__icons">
-            <button title="Фильтр по датам (не реализовано)">⚲</button>
-            <button title="Аккаунт (не реализовано)">⚉</button>
+            <button title="Фильтр по датам (не реализовано)">🔍</button>
+            <button title="Аккаунт (не реализовано)">👤</button>
           </div>
         </div>
         {s.appliedDateTo && (
