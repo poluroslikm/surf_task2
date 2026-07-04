@@ -5,7 +5,8 @@ Thumbs.db
 # Editors / IDEs
 .idea/
 *.iml
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 
 # Node (api/ OpenAPI tooling)
 node_modules/

@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "golang.go",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-yaml",
+    "fwcd.kotlin",
+    "vscjava.vscode-gradle",
+    "vscjava.vscode-java-pack"
+  ]
+}
