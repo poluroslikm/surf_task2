@@ -12,8 +12,9 @@ import (
 
 // Handlers groups the domain handlers wired into the router.
 type Handlers struct {
-	Auth  *AuthHandler
-	Slots *SlotsHandler
+	Auth     *AuthHandler
+	Slots    *SlotsHandler
+	Bookings *BookingsHandler
 }
 
 func NewRouter(h Handlers, authSvc *service.AuthService, logger *slog.Logger) http.Handler {
@@ -37,6 +38,15 @@ func NewRouter(h Handlers, authSvc *service.AuthService, logger *slog.Logger) ht
 		r.Use(RequireAuth(authSvc))
 		r.Get("/", h.Slots.List)
 		r.Get("/{slotId}", h.Slots.Get)
+	})
+
+	r.Route("/bookings", func(r chi.Router) {
+		r.Use(RequireAuth(authSvc))
+		r.Post("/", h.Bookings.Create)
+		r.Get("/", h.Bookings.List)
+		r.Get("/{bookingId}", h.Bookings.Get)
+		r.Post("/{bookingId}/cancel", h.Bookings.Cancel)
+		r.Post("/{bookingId}/rating", h.Bookings.SubmitRating)
 	})
 
 	return r

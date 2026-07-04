@@ -67,3 +67,57 @@ type Error struct {
 	Message string         `json:"message"`
 	Details map[string]any `json:"details,omitempty"`
 }
+
+// CreateBookingRequest — bookings/models.yaml#/components/schemas/CreateBookingRequest.
+type CreateBookingRequest struct {
+	SlotID          string `json:"slot_id"`
+	EquipmentChoice string `json:"equipment_choice"`
+}
+
+// SubmitRatingRequest — bookings/models.yaml#/components/schemas/SubmitRatingRequest.
+type SubmitRatingRequest struct {
+	Stars   int     `json:"stars"`
+	Comment *string `json:"comment,omitempty"`
+}
+
+// Rating — bookings/models.yaml#/components/schemas/Rating.
+type Rating struct {
+	Stars     int       `json:"stars"`
+	Comment   *string   `json:"comment,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Booking — bookings/models.yaml#/components/schemas/Booking. Full representation with the
+// nested Slot, used by createBooking/getBooking/cancelBooking/submitRating.
+type Booking struct {
+	ID                    string     `json:"id"`
+	SlotID                string     `json:"slot_id"`
+	ClientID              string     `json:"client_id"`
+	EquipmentChoice       string     `json:"equipment_choice"`
+	Status                string     `json:"status"`
+	PriceTotal            int        `json:"price_total"`
+	FreeCancellationUntil time.Time  `json:"free_cancellation_until"`
+	Rating                *Rating    `json:"rating,omitempty"`
+	CreatedAt             time.Time  `json:"created_at"`
+	CancelledAt           *time.Time `json:"cancelled_at,omitempty"`
+	Slot                  Slot       `json:"slot"`
+}
+
+// BookingSummary — bookings/models.yaml#/components/schemas/BookingSummary. Trimmed
+// representation for listBookings — deliberately no client_id field (per contract).
+type BookingSummary struct {
+	ID              string     `json:"id"`
+	SlotID          string     `json:"slot_id"`
+	EquipmentChoice string     `json:"equipment_choice"`
+	Status          string     `json:"status"`
+	PriceTotal      int        `json:"price_total"`
+	CreatedAt       time.Time  `json:"created_at"`
+	CancelledAt     *time.Time `json:"cancelled_at,omitempty"`
+	Slot            Slot       `json:"slot"`
+}
+
+// BookingListResponse — bookings/models.yaml#/components/schemas/BookingListResponse. No
+// pagination — the contract has none for listBookings.
+type BookingListResponse struct {
+	Items []BookingSummary `json:"items"`
+}

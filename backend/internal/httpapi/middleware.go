@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -12,10 +13,15 @@ import (
 	"github.com/chef-stol/backend/internal/service"
 )
 
+type contextKey int
+
+const clientContextKey contextKey = iota
+
 // RequireAuth extracts "Authorization: Bearer <token>" and rejects with a contractual 401
-// if it's missing or invalid (NFR-7). The auth/slots endpoints wired up so far only need to
-// know the caller is authenticated, not who they are — per-client scoping (needed once
-// bookings land, NFR-8) is deliberately not threaded through the request context yet.
+// if it's missing or invalid (NFR-7), then attaches the authenticated domain.Client to the
+// request context so downstream handlers can scope reads/writes to the caller. Bookings needs
+// this for per-client scoping (NFR-8: listBookings/getBooking/cancelBooking/submitRating) —
+// auth/slots didn't, which is why this was deferred until now.
 func RequireAuth(auth *service.AuthService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,13 +31,22 @@ func RequireAuth(auth *service.AuthService) func(http.Handler) http.Handler {
 				mapDomainError(w, domain.ErrUnauthorized)
 				return
 			}
-			if _, err := auth.Authenticate(r.Context(), strings.TrimPrefix(header, prefix)); err != nil {
+			client, err := auth.Authenticate(r.Context(), strings.TrimPrefix(header, prefix))
+			if err != nil {
 				mapDomainError(w, err)
 				return
 			}
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), clientContextKey, client)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// ClientFromContext retrieves the domain.Client attached by RequireAuth. Only meaningful for
+// handlers mounted behind RequireAuth — ok is false otherwise.
+func ClientFromContext(ctx context.Context) (domain.Client, bool) {
+	c, ok := ctx.Value(clientContextKey).(domain.Client)
+	return c, ok
 }
 
 // CORS is a permissive dev-only CORS middleware: there's no fixed deployment origin yet (see

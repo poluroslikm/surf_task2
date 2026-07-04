@@ -36,13 +36,16 @@ func main() {
 
 	authRepo := storage.NewAuthRepo(pool)
 	slotsRepo := storage.NewSlotsRepo(pool)
+	bookingsRepo := storage.NewBookingsRepo(pool)
 
 	authSvc := service.NewAuthService(authRepo, cfg.SessionTTL)
 	slotsSvc := service.NewSlotsService(slotsRepo)
+	bookingsSvc := service.NewBookingsService(bookingsRepo)
 
 	router := httpapi.NewRouter(httpapi.Handlers{
-		Auth:  httpapi.NewAuthHandler(authSvc),
-		Slots: httpapi.NewSlotsHandler(slotsSvc),
+		Auth:     httpapi.NewAuthHandler(authSvc),
+		Slots:    httpapi.NewSlotsHandler(slotsSvc),
+		Bookings: httpapi.NewBookingsHandler(bookingsSvc),
 	}, authSvc, logger)
 
 	srv := &http.Server{
