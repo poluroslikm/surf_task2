@@ -34,6 +34,29 @@ func RequireAuth(auth *service.AuthService) func(http.Handler) http.Handler {
 	}
 }
 
+// CORS is a permissive dev-only CORS middleware: there's no fixed deployment origin yet (see
+// README "Переменные окружения"), so it reflects whatever Origin the browser sent instead of
+// hardcoding one. Must run before RequireAuth so preflight OPTIONS (sent by the browser ahead
+// of any request carrying "Authorization") never hits the 401 check.
+func CORS() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if origin := r.Header.Get("Origin"); origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+			}
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // AccessLog logs one structured line per request.
 func AccessLog(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

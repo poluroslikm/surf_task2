@@ -18,6 +18,7 @@ type Handlers struct {
 
 func NewRouter(h Handlers, authSvc *service.AuthService, logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
+	r.Use(CORS())
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(AccessLog(logger))
