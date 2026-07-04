@@ -1,6 +1,10 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSlotsScreen } from './useSlotsScreen'
 import type { ProgramDifficulty, Slot } from '../../api/types'
 import { AlertPotIllustration, EmptyBowlIllustration, WaveDivider } from '../../components/Illustrations'
+import { AccountSheet } from '../../components/AccountSheet'
+import { TabBar } from '../../components/TabBar'
 
 function difficultyLabel(difficulty: ProgramDifficulty): string {
   return difficulty === 'novice' ? 'Новичковый' : 'Для опытных'
@@ -51,12 +55,12 @@ function LoadingSkeleton() {
 // SCR-002. Header/chip/card/tab-bar structure follows the ASCII wireframe in
 // 3-design-brief/SCR-002-slot-list.md §5.
 //
-// Visual placeholders only, wired to no-op (see client/README.md "Не реализовано"):
-// - Filter icon (⚲) and "Выбрать другой период" (Empty, default period) — open BS-001, not built.
-// - Account icon (⚉) — opens BS-004, not implemented.
-// - "Мои записи" tab — SCR-005 doesn't exist yet.
-export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: string) => void }) {
+// Visual placeholder only, wired to no-op (see client/README.md "Не реализовано"):
+// - Filter icon (🔍) — opens BS-001, not built yet.
+export function SlotsScreen() {
   const s = useSlotsScreen()
+  const navigate = useNavigate()
+  const [accountOpen, setAccountOpen] = useState(false)
 
   return (
     <div className="screen screen--slots">
@@ -65,7 +69,9 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
           <h1>Классы</h1>
           <div className="slots-header__icons">
             <button title="Фильтр по датам (не реализовано)">🔍</button>
-            <button title="Аккаунт (не реализовано)">👤</button>
+            <button title="Аккаунт" onClick={() => setAccountOpen(true)}>
+              👤
+            </button>
           </div>
         </div>
         {s.appliedDateTo && (
@@ -89,7 +95,7 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
             </button>
             <div className="slot-list">
               {s.screen.value.map((slot) => (
-                <SlotCard key={slot.id} slot={slot} onClick={() => onSlotSelected(slot.id)} />
+                <SlotCard key={slot.id} slot={slot} onClick={() => navigate(`/slots/${slot.id}`)} />
               ))}
             </div>
           </>
@@ -118,12 +124,8 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
         {s.snack && <div className="snack">{s.snack}</div>}
       </div>
 
-      <nav className="tab-bar">
-        <span className="tab-bar__item tab-bar__item--active">🍳 Классы</span>
-        <span className="tab-bar__item" title="Не реализовано (SCR-005)">
-          🗓 Мои записи
-        </span>
-      </nav>
+      <TabBar />
+      {accountOpen && <AccountSheet onClose={() => setAccountOpen(false)} />}
     </div>
   )
 }

@@ -54,3 +54,53 @@ export interface Slot {
 export interface SlotListResponse {
   items: Slot[]
 }
+
+export type EquipmentChoice = 'own' | 'rental'
+
+export interface CreateBookingRequest {
+  slot_id: string
+  equipment_choice: EquipmentChoice
+}
+
+export interface SubmitRatingRequest {
+  stars: number
+  comment?: string | null
+}
+
+export interface Rating {
+  stars: number
+  comment?: string | null
+  created_at: string
+}
+
+export type BookingStatus = 'active' | 'cancelled' | 'late_cancel' | 'cancelled_by_studio'
+
+export interface Booking {
+  id: string
+  slot_id: string
+  client_id: string
+  equipment_choice: EquipmentChoice
+  status: BookingStatus
+  price_total: number
+  free_cancellation_until: string
+  rating?: Rating | null
+  created_at: string
+  cancelled_at?: string | null
+  slot: Slot
+}
+
+// BookingSummary — deliberately no client_id (per api/bookings/models.yaml).
+export interface BookingSummary {
+  id: string
+  slot_id: string
+  equipment_choice: EquipmentChoice
+  status: BookingStatus
+  price_total: number
+  created_at: string
+  cancelled_at?: string | null
+  slot: Slot
+}
+
+export interface BookingListResponse {
+  items: BookingSummary[]
+}

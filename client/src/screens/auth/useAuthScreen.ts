@@ -61,7 +61,7 @@ export function useAuthScreen(onAuthenticated: () => void) {
     try {
       const response =
         activeTab === 'register' ? await authApi.register({ email, password }) : await authApi.login({ email, password })
-      session.setToken(response.token)
+      session.setSession(response.token, response.client.email)
       onAuthenticated()
       return
     } catch (err) {

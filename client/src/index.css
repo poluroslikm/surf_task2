@@ -437,3 +437,84 @@ input:focus-visible {
 .tab-bar__item--active {
   color: var(--accent-dark);
 }
+
+/* --- Shared bottom sheet (BS-002/BS-003/BS-004 all reuse this — foundations §4.3) --- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 27, 18, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.sheet {
+  background: var(--surface);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  box-shadow: 0 -4px 20px rgba(43, 27, 18, 0.25);
+}
+
+.sheet__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sheet__header h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.sheet__close {
+  border: none;
+  background: var(--surface-alt);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.sheet__email {
+  color: var(--ink-muted);
+  margin: 0 0 20px;
+  word-break: break-word;
+}
+
+.sheet__action {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.sheet__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.sheet__actions .sheet__action {
+  flex: 1;
+}
+
+.sheet__action--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  border: none;
+}
+
+.sheet__action--danger {
+  color: var(--error);
+  border-color: var(--error-bg);
+}
