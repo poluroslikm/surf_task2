@@ -8,27 +8,28 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Node (api/ OpenAPI tooling)
+# Node (api/ OpenAPI tooling — ad-hoc npx, no committed lockfile needed there)
 node_modules/
-package-lock.json
+api/package-lock.json
 api/dist/
+
+# client/ (React/Vite) keeps its own package-lock.json committed for reproducible builds —
+# not covered by the api/-scoped rule above.
 
 # Go (primer/ backend)
 primer/**/backend/bin/
 primer/**/backend/.env
 
-# Gradle / Kotlin / Android (primer/ client, and our own client/)
+# Gradle / Kotlin / Android (primer/ client only — our own client/ is React/Vite now)
 primer/**/client/.gradle/
 primer/**/client/**/build/
 primer/**/client/local.properties
 primer/**/client/kotlin-js-store/
 primer/**/client/*.hprof
-client/.gradle/
-client/**/build/
-client/local.properties
-client/kotlin-js-store/
-client/*.hprof
 .kotlin/
+
+# Vite build output (our client/)
+client/dist/
 
 # Xcode (primer/ client/iosApp)
 primer/**/iosApp/build/
