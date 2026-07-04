@@ -1,0 +1,67 @@
+openapi: 3.0.3
+
+info:
+  title: «Шеф-стол» API — Push
+  description: >-
+    Регистрация Web Push подписок клиентских устройств/браузеров (FR-21,
+    FR-22; LOGIC-004). Пятый домен контракта — решение
+    `6-development/FEATURES_IMPLEMENTATION_PLAN.md` → FEAT-01: подписка —
+    самостоятельный ресурс с собственным жизненным циклом (создаётся
+    клиентом, привязана к устройству, не к конкретной записи), по той же
+    логике, по которой bookings — отдельный домен, а не подпуть slots (см.
+    `../README.md` → «Почему только 4 домена» — здесь тот же принцип
+    оправдывает пятый). Доставку самих push-сообщений (напоминание за 24ч,
+    уведомление об отмене студией) реализует бэкенд — не часть этого
+    контракта, см. `6-development/BE_IMPLEMENTATION_PLAN.md` → BE-10.
+  version: 1.0.0
+
+servers:
+  - url: https://api.chef-stol.example/v1
+    description: Production
+  - url: https://staging-api.chef-stol.example/v1
+    description: Staging
+
+tags:
+  - name: Push
+    description: Push-подписки
+
+security:
+  - bearerAuth: []
+
+paths:
+  /push/subscriptions:
+    post:
+      tags:
+        - Push
+      summary: Зарегистрировать push-подписку
+      operationId: registerPushSubscription
+      description: >-
+        Регистрирует (или обновляет, если endpoint уже известен — upsert)
+        Web Push подписку текущего клиента для этого устройства/браузера
+        (LOGIC-004, шаг Subscribe). Не блокирует и не подтверждает закрытие
+        BS-002 — вызывается фоново после Notification.requestPermission()
+        granted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/PushSubscription'
+      responses:
+        '200':
+          description: Подписка сохранена (создана или обновлена по endpoint)
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/PushSubscription'
+        '400':
+          $ref: '../common/models.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common/models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '../auth/models.yaml#/components/securitySchemes/bearerAuth'

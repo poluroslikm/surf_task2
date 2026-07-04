@@ -1,0 +1,37 @@
+# Web Push подписка устройства/браузера клиента. Ссылки: '#/components/schemas/...' — внутри
+# файла. Форма схемы — стандартный PushSubscriptionJSON браузерного Push API
+# (endpoint + keys.p256dh/keys.auth), см. LOGIC-004.
+
+components:
+  schemas:
+    PushSubscriptionKeys:
+      type: object
+      description: Криптографические ключи подписки, как их отдаёт PushManager.subscribe().
+      required:
+        - p256dh
+        - auth
+      properties:
+        p256dh:
+          type: string
+          description: Публичный ключ клиента (base64url), для шифрования payload.
+        auth:
+          type: string
+          description: Auth-секрет подписки (base64url).
+
+    PushSubscription:
+      type: object
+      description: >-
+        Подписка на push-уведомления для текущего устройства/браузера клиента
+        (FR-21, FR-22; LOGIC-004). Регистрируется один раз при первом granted
+        разрешении на устройстве; повторная регистрация того же endpoint —
+        не ошибка (upsert), т.к. браузер может переотправить ту же подписку.
+      required:
+        - endpoint
+        - keys
+      properties:
+        endpoint:
+          type: string
+          format: uri
+          description: Уникальный URL push-сервиса браузера для этой подписки.
+        keys:
+          $ref: '#/components/schemas/PushSubscriptionKeys'
