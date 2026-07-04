@@ -3,6 +3,11 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { session } from './session/session'
 import { AuthScreen } from './screens/auth/AuthScreen'
 import { SlotsScreen } from './screens/slots/SlotsScreen'
+import { SlotCardScreen } from './screens/slotCard/SlotCardScreen'
+import { BookingScreen } from './screens/booking/BookingScreen'
+import { MyBookingsScreen } from './screens/myBookings/MyBookingsScreen'
+import { BookingDetailsScreen } from './screens/bookingDetails/BookingDetailsScreen'
+import { RatingScreen } from './screens/rating/RatingScreen'
 
 // Root: Auth <-> authenticated router switch on session presence (FE-05). Route contract
 // (see 6-development/FE_IMPLEMENTATION_PLAN.md for the full map):
@@ -25,6 +30,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SlotsScreen />} />
+        <Route path="/slots/:slotId" element={<SlotCardScreen />} />
+        <Route path="/slots/:slotId/book" element={<BookingScreen />} />
+        <Route path="/bookings" element={<MyBookingsScreen />} />
+        <Route path="/bookings/:bookingId" element={<BookingDetailsScreen />} />
+        <Route path="/bookings/:bookingId/rate" element={<RatingScreen />} />
       </Routes>
     </BrowserRouter>
   )

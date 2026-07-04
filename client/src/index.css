@@ -518,3 +518,483 @@ input:focus-visible {
   color: var(--error);
   border-color: var(--error-bg);
 }
+/* --- Slot card (SCR-003) + Booking (SCR-004) shared header --- */
+
+.slot-card-header {
+  background: var(--surface);
+}
+
+.slot-card-header__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 16px 14px;
+}
+
+.slot-card-header__row h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--accent-dark);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-button {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.icon-button:disabled {
+  color: var(--ink-muted);
+}
+
+/* --- Slot card screen (SCR-003) content --- */
+
+.skeleton-photo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, var(--surface-alt) 25%, #fff8f0 37%, var(--surface-alt) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, var(--surface-alt) 25%, #fff8f0 37%, var(--surface-alt) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line--title {
+  width: 70%;
+  height: 22px;
+}
+
+.slot-card-screen__photo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  background: var(--surface-alt);
+}
+
+.slot-card-screen__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.slot-card-screen__title-row h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.badge--difficulty {
+  flex-shrink: 0;
+  background: var(--surface-alt);
+  color: var(--accent-dark);
+}
+
+.slot-card-screen__block {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.slot-card-screen__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.slot-card-screen__value {
+  color: var(--ink);
+}
+
+.slot-card-screen__value--big {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.slot-card-screen__seats-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slot-card-screen__reason {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+}
+
+.slot-card-screen__list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink);
+}
+
+.slot-card-screen__list li {
+  margin-bottom: 4px;
+}
+
+.slot-card-screen__price {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.slot-card-screen__offline-note {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+/* --- Booking screen (SCR-004) --- */
+
+.booking-summary {
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.booking-summary__row {
+  margin-bottom: 6px;
+  color: var(--ink-muted);
+}
+
+.booking-summary__row:last-child {
+  margin-bottom: 0;
+}
+
+.booking-summary__program {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.equipment-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-alt);
+  margin-bottom: 8px;
+}
+
+.equipment-toggle__option {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--ink-muted);
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+.equipment-toggle__option--active {
+  background: var(--surface);
+  color: var(--accent-dark);
+  box-shadow: 0 2px 6px rgba(59, 30, 15, 0.15);
+}
+
+.equipment-toggle__option:disabled {
+  opacity: 0.7;
+}
+
+.equipment-toggle__hint {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* --- Booking success (BS-002) --- */
+
+.booking-success-sheet {
+  text-align: center;
+  max-height: 90svh;
+  overflow-y: auto;
+}
+
+.booking-success-sheet__icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.booking-success-sheet__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.booking-success-sheet__summary {
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.booking-success-sheet__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.booking-success-sheet__row:first-child {
+  border-top: none;
+}
+
+.booking-success-sheet__label {
+  color: var(--ink-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.booking-success-sheet__value {
+  color: var(--ink);
+  font-weight: 700;
+  text-align: right;
+}
+
+.booking-success-sheet__price {
+  color: var(--accent-dark);
+  font-size: 18px;
+}
+
+.booking-success-sheet__offline-note {
+  text-align: left;
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.booking-success-sheet__push {
+  text-align: left;
+  background: var(--surface-alt);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.booking-success-sheet__push p {
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.booking-success-sheet__done {
+  margin-top: 4px;
+}
+/* --- My bookings (SCR-005) --- */
+
+.booking-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.booking-card__price {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.badge--active {
+  background: var(--surface-alt);
+  color: var(--olive);
+}
+
+.badge--past {
+  background: var(--surface-alt);
+  color: var(--ink-muted);
+}
+
+/* --- Booking details (SCR-006) + rating (SCR-007): shared nested-screen header --- */
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.details-header__back {
+  min-width: 40px;
+  min-height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  font-size: 18px;
+  color: var(--accent-dark);
+  flex-shrink: 0;
+}
+
+.details-header h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  margin: 0;
+  color: var(--accent-dark);
+}
+
+.status-badge {
+  margin-bottom: 16px;
+}
+
+.status-badge__reason {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-section__label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.detail-section__value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-section__hint {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.free-cancel-row {
+  margin: 4px 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.bottom-cta__hint {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* --- Cancel confirmation (BS-003) --- */
+
+.cancel-sheet__warning {
+  background: var(--error-bg);
+  color: var(--ink);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+/* --- Chef rating (SCR-007) --- */
+
+.rating-question {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  margin: 4px 0 12px;
+  color: var(--ink);
+}
+
+.rating-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.rating-star {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--border);
+}
+
+.rating-star--filled {
+  color: var(--gold);
+}
+
+.rating-state-text {
+  margin: 6px 0 20px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.field textarea:focus-visible {
+  border-color: var(--accent);
+}
+
+.rating-display__stars {
+  font-size: 22px;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.rating-display__comment {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+}
