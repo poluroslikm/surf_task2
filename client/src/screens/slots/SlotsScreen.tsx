@@ -1,8 +1,15 @@
 import { useSlotsScreen } from './useSlotsScreen'
 import type { ProgramDifficulty, Slot } from '../../api/types'
+import { AlertPotIllustration, EmptyBowlIllustration, WaveDivider } from '../../components/Illustrations'
 
 function difficultyLabel(difficulty: ProgramDifficulty): string {
   return difficulty === 'novice' ? 'Новичковый' : 'Для опытных'
+}
+
+// Purely decorative prefix — the required label text itself (checked by AC-002 wording) is
+// untouched, this is just a visual cue alongside it, not instead of it (foundations §3.2).
+function difficultyEmoji(difficulty: ProgramDifficulty): string {
+  return difficulty === 'novice' ? '🌱' : '🔥'
 }
 
 function SlotCard({ slot, onClick }: { slot: Slot; onClick: () => void }) {
@@ -13,7 +20,7 @@ function SlotCard({ slot, onClick }: { slot: Slot; onClick: () => void }) {
     <button className="slot-card" onClick={onClick}>
       <div className="slot-card__date">{new Date(slot.start_at).toLocaleString('ru-RU')}</div>
       <div className="slot-card__title">
-        {slot.program.name} · {difficultyLabel(slot.program.difficulty)}
+        {slot.program.name} · {difficultyEmoji(slot.program.difficulty)} {difficultyLabel(slot.program.difficulty)}
       </div>
       <div className="slot-card__chef">Шеф {slot.chef.name}</div>
       {slot.status === 'cancelled' ? (
@@ -30,13 +37,12 @@ function SlotCard({ slot, onClick }: { slot: Slot; onClick: () => void }) {
 }
 
 function LoadingSkeleton() {
-  // 4-6 card-shaped placeholders, not a blank screen (foundations §5/§7, NFR-5).
+  // 4-6 card-shaped placeholders, not a blank screen (foundations §5/§7, NFR-5). The shimmer
+  // animation is purely visual (index.css), so screen readers get a plain status text instead.
   return (
-    <div className="skeleton-list">
+    <div className="skeleton-list" role="status" aria-label="Загрузка списка классов">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="skeleton-card">
-          Загрузка…
-        </div>
+        <div key={i} className="skeleton-card" aria-hidden="true" />
       ))}
     </div>
   )
@@ -70,6 +76,7 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
             <button onClick={s.resetDateFilter}>✕</button>
           </div>
         )}
+        <WaveDivider color="var(--bg)" />
       </header>
 
       <div className="screen-scroll">
@@ -90,6 +97,7 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
 
         {s.screen.kind === 'empty' && (
           <div className="empty-state">
+            <EmptyBowlIllustration />
             <p>{s.screen.reason}</p>
             {s.appliedDateTo ? (
               <button onClick={s.resetDateFilter}>Сбросить фильтр</button>
@@ -101,6 +109,7 @@ export function SlotsScreen({ onSlotSelected }: { onSlotSelected: (slotId: strin
 
         {s.screen.kind === 'error' && (
           <div className="error-state">
+            <AlertPotIllustration />
             <p>{s.screen.message}</p>
             <button onClick={s.retryAfterError}>Обновить</button>
           </div>

@@ -1,23 +1,27 @@
-/* Тёплая кулинарная тема: терракота/паприка + тёплый крем, вместо нейтральной заглушки.
-   Бренд заказчиком не зафиксирован (3-design-brief/00-foundations.md "Объём визуальных
-   требований") — это самостоятельное дизайнерское решение, не заимствование из макета.
-   Mobile-first, одна колонка (foundations §3.4), фикс. хедер/CTA/таб-бар (§4.1). */
+/* Кулинарная тема: терракота/паприка + тёплый крем, декоративный shape-дивайдер, шрифтовая
+   пара с полноценной кириллицей (Yeseva One — display, PT Sans — текст). Бренд заказчиком не
+   зафиксирован (3-design-brief/00-foundations.md "Объём визуальных требований") — собственное
+   дизайнерское решение. Mobile-first, одна колонка (§3.4), фикс. хедер/CTA/таб-бар (§4.1). */
 
 :root {
-  --bg: #fff8f0;
+  --bg: #faf1e4;
   --surface: #ffffff;
-  --surface-muted: #fbead9;
-  --text: #3b2a20;
-  --text-muted: #8a7568;
-  --border: #ead9c8;
+  --surface-alt: #ffeeda;
+  --ink: #2b1b12;
+  --ink-muted: #8a7160;
+  --border: #ead9c2;
   --accent: #c1440e;
-  --accent-dark: #a03a0c;
-  --accent-contrast: #ffffff;
+  --accent-light: #f1874a;
+  --accent-dark: #8f3209;
+  --olive: #6e7a4b;
+  --gold: #d3a017;
   --error: #b3261e;
-  --error-bg: #fdecea;
-  font: 16px/1.45 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text);
-  background: var(--bg);
+  --error-bg: #fbe7e3;
+  --font-display: 'Yeseva One', ui-serif, Georgia, serif;
+  --font-body: 'PT Sans', system-ui, 'Segoe UI', sans-serif;
+
+  font: 16px/1.5 var(--font-body);
+  color: var(--ink);
 }
 
 * {
@@ -26,13 +30,16 @@
 
 body {
   margin: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 #root {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100svh;
-  background: var(--bg);
+  background: transparent;
 }
 
 button {
@@ -58,22 +65,46 @@ input:focus-visible {
   padding: 16px;
 }
 
+.wave-divider {
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin-bottom: -1px;
+}
+
+.state-illustration {
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
 /* --- Auth (SCR-001) --- */
 
-.auth-header h1 {
+.auth-header {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
   text-align: center;
-  padding: 32px 0 12px;
-  margin: 0;
-  font-family: ui-serif, Georgia, 'Times New Roman', serif;
-  font-weight: 600;
-  font-size: 32px;
-  color: var(--accent-dark);
+  padding: 40px 16px 0;
+}
+
+.auth-header__emoji {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.auth-header h1 {
+  margin: 8px 0 0;
+  padding-bottom: 28px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .tabs {
   display: flex;
-  background: var(--surface-muted);
-  border-radius: 10px;
+  background: var(--surface-alt);
+  border-radius: 12px;
   padding: 4px;
   margin-bottom: 20px;
 }
@@ -82,17 +113,16 @@ input:focus-visible {
   flex: 1;
   min-height: 40px;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   background: none;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: var(--ink-muted);
+  font-weight: 700;
 }
 
 .tab--active {
   background: var(--surface);
   color: var(--accent-dark);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(59, 42, 32, 0.15);
+  box-shadow: 0 2px 6px rgba(59, 30, 15, 0.15);
 }
 
 .field {
@@ -104,17 +134,18 @@ input:focus-visible {
   display: block;
   margin-bottom: 6px;
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--ink-muted);
+  font-weight: 700;
 }
 
 .field input {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
   padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
   background: var(--surface);
-  color: var(--text);
+  color: var(--ink);
 }
 
 .field input:focus-visible {
@@ -131,11 +162,12 @@ input:focus-visible {
 }
 
 .password-toggle {
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
   background: var(--surface);
-  color: var(--text-muted);
+  color: var(--ink-muted);
   padding: 0 12px;
+  font-weight: 700;
 }
 
 .field-error,
@@ -149,8 +181,9 @@ input:focus-visible {
 .form-error {
   background: var(--error-bg);
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-top: 8px;
+  font-weight: 700;
 }
 
 .bottom-cta {
@@ -161,43 +194,47 @@ input:focus-visible {
 
 .bottom-cta button {
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   border: none;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
-  font-size: 16px;
-  transition: background-color 0.15s ease;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  box-shadow: 0 4px 14px rgba(193, 68, 14, 0.35);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 }
 
 .bottom-cta button:not(:disabled):hover {
-  background: var(--accent-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(193, 68, 14, 0.45);
 }
 
 .bottom-cta button:disabled {
   background: var(--border);
-  color: var(--text-muted);
+  color: var(--ink-muted);
+  box-shadow: none;
 }
 
 /* --- Slots (SCR-002) --- */
 
 .slots-header {
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
 }
 
 .slots-header__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 16px 12px;
+  padding: 22px 16px 14px;
 }
 
 .slots-header__row h1 {
-  font-family: ui-serif, Georgia, 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 28px;
   color: var(--accent-dark);
   margin: 0;
 }
@@ -206,8 +243,8 @@ input:focus-visible {
   min-width: 44px;
   min-height: 44px;
   border: none;
-  border-radius: 10px;
-  background: var(--surface-muted);
+  border-radius: 50%;
+  background: var(--surface-alt);
   font-size: 18px;
   margin-left: 8px;
 }
@@ -216,93 +253,109 @@ input:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 16px 12px;
+  margin: 0 16px 14px;
   padding: 8px 14px;
-  border-radius: 10px;
-  background: var(--surface-muted);
+  border-radius: 12px;
+  background: var(--surface-alt);
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--ink-muted);
 }
 
 .filter-chip button {
   border: none;
   background: none;
   color: var(--accent-dark);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .skeleton-list,
 .slot-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .skeleton-card,
 .slot-card {
+  position: relative;
   border: 1px solid var(--border);
+  border-left: 5px solid var(--accent);
   border-radius: 14px;
-  padding: 16px;
+  padding: 16px 16px 16px 20px;
   text-align: left;
   background: var(--surface);
   min-height: 44px;
-  box-shadow: 0 1px 2px rgba(59, 42, 32, 0.06);
+  box-shadow: 0 2px 6px rgba(59, 30, 15, 0.08);
 }
 
 .slot-card {
   transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease;
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .slot-card:hover {
-  box-shadow: 0 4px 10px rgba(59, 42, 32, 0.12);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 30, 15, 0.16);
+  transform: translateY(-2px);
 }
 
 .skeleton-card {
-  color: var(--text-muted);
-  background: var(--surface-muted);
-  box-shadow: none;
+  color: transparent;
+  border-left-color: var(--border);
+  background: linear-gradient(90deg, var(--surface-alt) 25%, #fff8f0 37%, var(--surface-alt) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+  height: 92px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .slot-card__date {
   color: var(--accent-dark);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 
 .slot-card__title {
-  font-weight: 600;
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 19px;
   margin: 6px 0 2px;
+  color: var(--ink);
 }
 
 .slot-card__chef {
-  color: var(--text-muted);
+  color: var(--ink-muted);
   font-size: 14px;
 }
 
 .slot-card__seats {
   margin-top: 8px;
-  font-weight: 600;
-  color: var(--accent-dark);
+  font-weight: 700;
+  color: var(--olive);
 }
 
 .badge {
   display: inline-block;
   margin-top: 8px;
-  padding: 3px 10px;
+  padding: 3px 12px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .badge--full {
-  background: var(--surface-muted);
-  color: var(--text-muted);
+  background: var(--surface-alt);
+  color: var(--ink-muted);
 }
 
 .badge--cancelled {
@@ -313,41 +366,57 @@ input:focus-visible {
 .refresh-button {
   width: 100%;
   min-height: 42px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  margin-bottom: 14px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
   background: var(--surface);
   color: var(--accent-dark);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .empty-state,
 .error-state {
   text-align: center;
   padding: 56px 16px;
-  color: var(--text-muted);
+  color: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-state p,
+.error-state p {
+  max-width: 260px;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .empty-state button,
 .error-state button {
   margin-top: 16px;
   min-height: 44px;
-  padding: 0 20px;
+  padding: 0 22px;
   border: none;
-  border-radius: 10px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(193, 68, 14, 0.3);
+}
+
+.error-state .state-illustration {
+  color: var(--error);
 }
 
 .snack {
   position: sticky;
   bottom: 8px;
-  background: var(--text);
+  background: var(--ink);
   color: #fff;
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   text-align: center;
+  font-weight: 700;
 }
 
 .tab-bar {
@@ -361,10 +430,10 @@ input:focus-visible {
   text-align: center;
   padding: 12px 0;
   min-height: 44px;
-  color: var(--text-muted);
+  color: var(--ink-muted);
+  font-weight: 700;
 }
 
 .tab-bar__item--active {
-  font-weight: 600;
   color: var(--accent-dark);
 }

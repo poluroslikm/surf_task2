@@ -1,4 +1,5 @@
 import { useAuthScreen } from './useAuthScreen'
+import { WaveDivider } from '../../components/Illustrations'
 
 // SCR-001. Structure follows the ASCII wireframe in 3-design-brief/SCR-001-auth.md §5: title ->
 // tabs -> email -> password -> error area -> fixed bottom CTA.
@@ -8,7 +9,11 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: () => void })
   return (
     <div className="screen screen--auth">
       <header className="auth-header">
+        <div className="auth-header__emoji" aria-hidden="true">
+          🍳🥘🌿
+        </div>
         <h1>Шеф-стол</h1>
+        <WaveDivider color="var(--bg)" />
       </header>
 
       <div className="screen-scroll">
