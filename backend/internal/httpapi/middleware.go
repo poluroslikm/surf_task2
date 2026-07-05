@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"crypto/subtle"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -53,11 +54,13 @@ func ClientFromContext(ctx context.Context) (domain.Client, bool) {
 // separate from RequireAuth since this isn't a client session, just a header shared secret
 // (cfg.InternalToolsToken) compared against X-Internal-Token. A missing/mismatched token gets a
 // plain 401 (http.Error) — this route isn't part of api/, so it doesn't need to match the
-// client-facing Error JSON schema.
+// client-facing Error JSON schema. Compared with subtle.ConstantTimeCompare (found in review) —
+// a plain != leaks the shared secret's matching-prefix length through response timing.
 func RequireInternalToken(token string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("X-Internal-Token") != token {
+			got := r.Header.Get("X-Internal-Token")
+			if len(got) != len(token) || subtle.ConstantTimeCompare([]byte(got), []byte(token)) != 1 {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}

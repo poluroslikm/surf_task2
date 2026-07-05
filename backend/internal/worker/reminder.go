@@ -14,7 +14,7 @@ import (
 
 // BookingsRepo is the persistence port used by the reminder worker (FEAT-04).
 type BookingsRepo interface {
-	FindDueForReminder(ctx context.Context, windowStart, windowEnd time.Time) ([]domain.Booking, error)
+	FindDueForReminder(ctx context.Context, now time.Time) ([]domain.Booking, error)
 	MarkReminderSent(ctx context.Context, bookingID string) error
 }
 
@@ -31,20 +31,18 @@ func RunReminderWorker(ctx context.Context, repo BookingsRepo, push *service.Pus
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			runReminderTick(ctx, repo, push, interval, logger)
+			runReminderTick(ctx, repo, push, logger)
 		}
 	}
 }
 
-// runReminderTick computes the due window as [now+24h-interval, now+24h) — sized exactly to the
-// tick interval so consecutive ticks tile the 24h-ahead timeline without a gap (a booking never
-// gets skipped) or overlap (never double-sent, also guarded by reminder_sent_at).
-func runReminderTick(ctx context.Context, repo BookingsRepo, push *service.PushService, interval time.Duration, logger *slog.Logger) {
+// runReminderTick asks the repo for whatever is due right now (fixed 24h horizon, not a per-tick
+// sliding window — see FindDueForReminder's doc comment for why: this makes each tick
+// self-contained and restart-safe, with no window math to keep in sync with the tick interval).
+func runReminderTick(ctx context.Context, repo BookingsRepo, push *service.PushService, logger *slog.Logger) {
 	now := time.Now().UTC()
-	windowStart := now.Add(24*time.Hour - interval)
-	windowEnd := now.Add(24 * time.Hour)
 
-	due, err := repo.FindDueForReminder(ctx, windowStart, windowEnd)
+	due, err := repo.FindDueForReminder(ctx, now)
 	if err != nil {
 		logger.Error("reminder worker: find due", "error", err)
 		return

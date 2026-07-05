@@ -257,18 +257,24 @@ func (r *BookingsRepo) SubmitRating(ctx context.Context, bookingID, clientID str
 	return r.Get(ctx, bookingID)
 }
 
-// FindDueForReminder returns active bookings whose slot starts within [windowStart, windowEnd)
-// and that haven't had a reminder attempted yet (FEAT-04, FR-21) — tracked via the
+// FindDueForReminder returns active bookings whose slot starts within the next 24h (and hasn't
+// started yet) and that haven't had a reminder attempted yet (FEAT-04, FR-21) — tracked via the
 // booking_reminders table (see migrations/00003 for why this is a separate table rather than a
-// reminder_sent_at column on bookings). The caller (the reminder worker) computes
-// windowStart/windowEnd as now()+24h-interval / now()+24h so consecutive ticks neither skip nor
-// double-send a booking.
-func (r *BookingsRepo) FindDueForReminder(ctx context.Context, windowStart, windowEnd time.Time) ([]domain.Booking, error) {
+// reminder_sent_at column on bookings).
+//
+// Deliberately a stateless "due right now" check against a fixed 24h horizon, not a sliding
+// per-tick window — found during code review: the original [now+24h-interval, now+24h) window
+// assumed perfectly periodic ticks with no gaps, so a missed tick (load) or a process restart
+// silently and permanently skipped any booking whose window fell entirely inside the gap, with
+// no way to catch up. This version has no such gap: any tick, at any cadence, after any downtime,
+// re-derives the full set of not-yet-reminded bookings due within 24h — reminder_sent_at (via
+// booking_reminders) is what prevents duplicates, not the window boundaries.
+func (r *BookingsRepo) FindDueForReminder(ctx context.Context, now time.Time) ([]domain.Booking, error) {
 	q := bookingSelect + `
 		LEFT JOIN booking_reminders br ON br.booking_id = b.id
 		WHERE b.status = 'active' AND br.booking_id IS NULL
-		AND s.start_at >= $1 AND s.start_at < $2`
-	rows, err := r.pool.Query(ctx, q, windowStart, windowEnd)
+		AND s.start_at > $1 AND s.start_at <= $1 + interval '24 hours'`
+	rows, err := r.pool.Query(ctx, q, now)
 	if err != nil {
 		return nil, err
 	}
