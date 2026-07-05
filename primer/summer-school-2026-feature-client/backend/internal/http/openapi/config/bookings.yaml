@@ -1,8 +1,0 @@
-package: bookingsapi
-generate:
-  chi-server: true
-  models: true
-  embedded-spec: true
-output: bookings/bookings.gen.go
-output-options:
-  skip-prune: true

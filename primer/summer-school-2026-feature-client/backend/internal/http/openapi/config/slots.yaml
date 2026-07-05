@@ -1,8 +1,0 @@
-package: slotsapi
-generate:
-  chi-server: true
-  models: true
-  embedded-spec: true
-output: slots/slots.gen.go
-output-options:
-  skip-prune: true

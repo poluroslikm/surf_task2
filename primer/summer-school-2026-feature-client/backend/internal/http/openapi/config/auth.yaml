@@ -1,8 +1,0 @@
-package: authapi
-generate:
-  chi-server: true
-  models: true
-  embedded-spec: true
-output: auth/auth.gen.go
-output-options:
-  skip-prune: true
