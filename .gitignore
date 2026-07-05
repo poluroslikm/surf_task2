@@ -48,3 +48,6 @@ venv/
 .env.*
 !.env.example
 !.env.defaults
+
+# Claude Code subagent scratch worktrees — never project content, cleaned up after each merge
+.claude/worktrees/
