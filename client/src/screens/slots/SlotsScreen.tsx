@@ -4,6 +4,7 @@ import { useSlotsScreen } from './useSlotsScreen'
 import type { ProgramDifficulty, Slot } from '../../api/types'
 import { AlertPotIllustration, EmptyBowlIllustration, WaveDivider } from '../../components/Illustrations'
 import { AccountSheet } from '../../components/AccountSheet'
+import { DateFilterSheet } from '../../components/DateFilterSheet'
 import { TabBar } from '../../components/TabBar'
 
 function difficultyLabel(difficulty: ProgramDifficulty): string {
@@ -54,13 +55,11 @@ function LoadingSkeleton() {
 
 // SCR-002. Header/chip/card/tab-bar structure follows the ASCII wireframe in
 // 3-design-brief/SCR-002-slot-list.md §5.
-//
-// Visual placeholder only, wired to no-op (see client/README.md "Не реализовано"):
-// - Filter icon (🔍) — opens BS-001, not built yet.
 export function SlotsScreen() {
   const s = useSlotsScreen()
   const navigate = useNavigate()
   const [accountOpen, setAccountOpen] = useState(false)
+  const [dateFilterOpen, setDateFilterOpen] = useState(false)
 
   return (
     <div className="screen screen--slots">
@@ -68,7 +67,13 @@ export function SlotsScreen() {
         <div className="slots-header__row">
           <h1>Классы</h1>
           <div className="slots-header__icons">
-            <button title="Фильтр по датам (не реализовано)">🔍</button>
+            <button
+              className={s.isFilterActive ? 'filter-icon-button filter-icon-button--active' : 'filter-icon-button'}
+              title={s.isFilterActive ? 'Фильтр по датам (активен)' : 'Фильтр по датам'}
+              onClick={() => setDateFilterOpen(true)}
+            >
+              🔍
+            </button>
             <button title="Аккаунт" onClick={() => setAccountOpen(true)}>
               👤
             </button>
@@ -76,9 +81,7 @@ export function SlotsScreen() {
         </div>
         {s.appliedDateTo && (
           <div className="filter-chip">
-            {/* Raw ISO string, not the pretty "3-20 июля" format from the wireframe — a Russian
-                date formatter isn't wired up in this iteration. */}
-            <span>Период: по {s.appliedDateTo}</span>
+            <span>Период: по {new Date(s.appliedDateTo).toLocaleDateString('ru-RU')}</span>
             <button onClick={s.resetDateFilter}>✕</button>
           </div>
         )}
@@ -90,14 +93,35 @@ export function SlotsScreen() {
 
         {s.screen.kind === 'content' && (
           <>
+            <div className="search-field">
+              <input
+                type="text"
+                placeholder="Поиск по шефу или программе"
+                value={s.searchQuery}
+                onChange={(e) => s.setSearchQuery(e.target.value)}
+              />
+              {s.searchQuery && (
+                <button
+                  className="search-field__clear"
+                  aria-label="Очистить поиск"
+                  onClick={() => s.setSearchQuery('')}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             <button className="refresh-button" onClick={s.refresh}>
               {s.screen.refreshing ? 'Обновление…' : 'Обновить'}
             </button>
-            <div className="slot-list">
-              {s.screen.value.map((slot) => (
-                <SlotCard key={slot.id} slot={slot} onClick={() => navigate(`/slots/${slot.id}`)} />
-              ))}
-            </div>
+            {s.filteredSlots.length === 0 ? (
+              <p className="search-empty">Ничего не найдено</p>
+            ) : (
+              <div className="slot-list">
+                {s.filteredSlots.map((slot) => (
+                  <SlotCard key={slot.id} slot={slot} onClick={() => navigate(`/slots/${slot.id}`)} />
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -108,7 +132,7 @@ export function SlotsScreen() {
             {s.appliedDateTo ? (
               <button onClick={s.resetDateFilter}>Сбросить фильтр</button>
             ) : (
-              <button title="Не реализовано (BS-001)">Выбрать другой период</button>
+              <button onClick={() => setDateFilterOpen(true)}>Выбрать другой период</button>
             )}
           </div>
         )}
@@ -126,6 +150,14 @@ export function SlotsScreen() {
 
       <TabBar />
       {accountOpen && <AccountSheet onClose={() => setAccountOpen(false)} />}
+      {dateFilterOpen && (
+        <DateFilterSheet
+          appliedDateTo={s.appliedDateTo}
+          onClose={() => setDateFilterOpen(false)}
+          onApply={s.applyDateTo}
+          onReset={s.resetDateFilter}
+        />
+      )}
     </div>
   )
 }

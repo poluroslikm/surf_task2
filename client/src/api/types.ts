@@ -104,3 +104,15 @@ export interface BookingSummary {
 export interface BookingListResponse {
   items: BookingSummary[]
 }
+
+// Mirrors api/push/models.yaml — PushSubscription. Named `...Dto` to avoid colliding with the
+// browser's built-in global `PushSubscription` type (Web Push API).
+export interface PushSubscriptionKeysDto {
+  p256dh: string
+  auth: string
+}
+
+export interface PushSubscriptionDto {
+  endpoint: string
+  keys: PushSubscriptionKeysDto
+}

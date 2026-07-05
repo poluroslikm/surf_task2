@@ -15,9 +15,11 @@ type Handlers struct {
 	Auth     *AuthHandler
 	Slots    *SlotsHandler
 	Bookings *BookingsHandler
+	Push     *PushHandler
+	Internal *InternalHandler
 }
 
-func NewRouter(h Handlers, authSvc *service.AuthService, logger *slog.Logger) http.Handler {
+func NewRouter(h Handlers, authSvc *service.AuthService, internalToolsToken string, logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Use(CORS())
 	r.Use(middleware.RequestID)
@@ -47,6 +49,19 @@ func NewRouter(h Handlers, authSvc *service.AuthService, logger *slog.Logger) ht
 		r.Get("/{bookingId}", h.Bookings.Get)
 		r.Post("/{bookingId}/cancel", h.Bookings.Cancel)
 		r.Post("/{bookingId}/rating", h.Bookings.SubmitRating)
+	})
+
+	r.Route("/push", func(r chi.Router) {
+		r.Use(RequireAuth(authSvc))
+		r.Post("/subscriptions", h.Push.Register)
+	})
+
+	// /internal/* is deliberately outside every RequireAuth-guarded group above — it's a
+	// dev-only tooling surface (FEAT-05), not part of api/, guarded by its own shared-secret
+	// header check instead of a client session.
+	r.Route("/internal", func(r chi.Router) {
+		r.Use(RequireInternalToken(internalToolsToken))
+		r.Post("/slots/{slotId}/force-cancel", h.Internal.ForceCancelSlot)
 	})
 
 	return r

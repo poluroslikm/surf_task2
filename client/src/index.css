@@ -998,3 +998,84 @@ input:focus-visible {
   margin: 6px 0 0;
   color: var(--ink-muted);
 }
+
+/* --- FEAT-08 (BS-001 date filter sheet) + FEAT-09 (search) — additive only, don't touch rules
+   above this header. --- */
+
+/* BS-001 grabber — swipe-to-close handle above the sheet header. */
+.sheet__grabber {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 0 auto 14px;
+}
+
+.date-filter-sheet__current {
+  margin: 0 0 12px;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.date-filter-sheet__hint {
+  margin: 6px 0 20px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* SCR-002 filter icon — dot indicator when a non-default period is active. */
+.filter-icon-button {
+  position: relative;
+}
+
+.filter-icon-button--active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface-alt);
+}
+
+/* FEAT-09 search field above the slot list. */
+.search-field {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.search-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 40px 8px 14px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.search-field input:focus-visible {
+  border-color: var(--accent);
+}
+
+.search-field__clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  min-width: 32px;
+  min-height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  color: var(--ink-muted);
+}
+
+.search-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--ink-muted);
+  font-weight: 700;
+}

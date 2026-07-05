@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { pushApi } from '../api/pushApi'
 import type { Booking, EquipmentChoice } from '../api/types'
+import { VAPID_PUBLIC_KEY } from '../core/config'
+import { urlBase64ToUint8Array } from '../core/webPush'
 
 // LOGIC-004: one-time-per-device flag, deliberately not tied to the server profile (§"Пояснения
 // к шагам" п.2 — the offer is scoped to this browser/device, not synced across devices).
@@ -42,11 +45,29 @@ export function BookingSuccessSheet({ booking, onDone }: { booking: Booking; onD
   }, [])
 
   function handleEnableReminders() {
-    // Best-effort and not awaited — never blocks "К моим записям". Registering the resulting
-    // PushSubscription with the server is out of contract scope (LOGIC-004 "API-запросы", no
-    // backend endpoint exists yet); we stop at requesting the browser permission and logging it.
+    // Best-effort and not awaited — never blocks "К моим записям" (LOGIC-004 "Обработка ошибок":
+    // a network failure registering the subscription doesn't block closing BS-002;
+    // push_permission = granted is saved locally regardless of server-side outcome). Every step
+    // after requestPermission is wrapped so a thrown/rejected promise here never surfaces to the
+    // user — at most a console.warn for our own debugging.
     Notification.requestPermission()
-      .then((permission) => console.log('[push] permission:', permission))
+      .then(async (permission) => {
+        console.log('[push] permission:', permission)
+        if (permission !== 'granted') return
+
+        try {
+          const registration = await navigator.serviceWorker.ready
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          })
+          const json = subscription.toJSON()
+          await pushApi.register({ endpoint: json.endpoint!, keys: { p256dh: json.keys!.p256dh, auth: json.keys!.auth } })
+        } catch (err) {
+          // best-effort — subscribe()/register() failures never block or surface to the user.
+          console.warn('[push] subscribe/register failed:', err)
+        }
+      })
       .catch(() => {
         /* best-effort — ignore */
       })

@@ -17,19 +17,28 @@
 
 ## TOC / Todo реализации
 
-- [ ] [FEAT-01. Контракт push-подписки (новый домен `api/push`)](#feat-01-контракт-push-подписки-новый-домен-apipush)
-- [ ] [FEAT-02. БД: push_subscriptions + reminder_sent_at](#feat-02-бд-push_subscriptions--reminder_sent_at)
-- [ ] [FEAT-03. Backend: регистрация подписки и отправка push (VAPID)](#feat-03-backend-регистрация-подписки-и-отправка-push-vapid)
-- [ ] [FEAT-04. Backend: воркер напоминаний за 24ч (FR-21)](#feat-04-backend-воркер-напоминаний-за-24ч-fr-21)
-- [ ] [FEAT-05. Backend: dev-инструмент принудительной отмены слота студией (FR-17/18/22)](#feat-05-backend-dev-инструмент-принудительной-отмены-слота-студией-fr-171822)
-- [ ] [FEAT-06. Frontend: реальная push-подписка после `granted`](#feat-06-frontend-реальная-push-подписка-после-granted)
-- [ ] [FEAT-07. Frontend: кастомный service worker (push/notificationclick)](#feat-07-frontend-кастомный-service-worker-pushnotificationclick)
-- [ ] [FEAT-08. Frontend: шторка фильтра по датам BS-001](#feat-08-frontend-шторка-фильтра-по-датам-bs-001)
-- [ ] [FEAT-09. Frontend: поиск по шефу/программе на SCR-002](#feat-09-frontend-поиск-по-шефупрограмме-на-scr-002)
+- [x] [FEAT-01. Контракт push-подписки (новый домен `api/push`)](#feat-01-контракт-push-подписки-новый-домен-apipush)
+- [x] [FEAT-02. БД: push_subscriptions + reminder_sent_at](#feat-02-бд-push_subscriptions--reminder_sent_at)
+- [x] [FEAT-03. Backend: регистрация подписки и отправка push (VAPID)](#feat-03-backend-регистрация-подписки-и-отправка-push-vapid)
+- [x] [FEAT-04. Backend: воркер напоминаний за 24ч (FR-21)](#feat-04-backend-воркер-напоминаний-за-24ч-fr-21)
+- [x] [FEAT-05. Backend: dev-инструмент принудительной отмены слота студией (FR-17/18/22)](#feat-05-backend-dev-инструмент-принудительной-отмены-слота-студией-fr-171822)
+- [x] [FEAT-06. Frontend: реальная push-подписка после `granted`](#feat-06-frontend-реальная-push-подписка-после-granted)
+- [x] [FEAT-07. Frontend: кастомный service worker (push/notificationclick)](#feat-07-frontend-кастомный-service-worker-pushnotificationclick)
+- [x] [FEAT-08. Frontend: шторка фильтра по датам BS-001](#feat-08-frontend-шторка-фильтра-по-датам-bs-001)
+- [x] [FEAT-09. Frontend: поиск по шефу/программе на SCR-002](#feat-09-frontend-поиск-по-шефупрограмме-на-scr-002)
 
-FEAT-01…FEAT-07 — фича «push-уведомления» (самая крупная, задевает контракт/БД/воркер/service
-worker). FEAT-08 — фильтр по датам. FEAT-09 — поиск. Порядок внутри push-цепочки важен (контракт
-→ БД → backend → frontend), FEAT-08/09 независимы и могут делаться параллельно с push-цепочкой.
+Все девять пунктов реализованы тремя параллельными саб-агентами в изолированных git worktree
+(Agent A — FEAT-02..05 бэкенд, Agent B — FEAT-06/07 фронтенд push, Agent C — FEAT-08/09 фильтр +
+поиск; FEAT-01 сделан централизованно перед их запуском), результат построчно проверен и слит
+вручную, затем прогнан живьём (см. `backend/README.md` и `client/README.md` → «Проверено вживую»).
+
+**Отклонение от плана, зафиксированное по факту реализации:** FEAT-02 вместо `ALTER TABLE bookings
+ADD COLUMN reminder_sent_at` использует отдельную таблицу `booking_reminders (booking_id PK FK,
+sent_at)` — обнаружено и проверено вживую агентом: роль `chef_stol` (та, что фактически использует
+`DATABASE_URL`) не владеет таблицей `bookings` (её создавал `postgres`) и не имеет прав `ALTER` на
+неё, а нового суперпользовательского сеанса для `GRANT` в этом окружении нет. Отдельная таблица
+решает ту же задачу идемпотентности («напоминание уже отправлено») без требования владения
+`bookings`.
 
 ---
 

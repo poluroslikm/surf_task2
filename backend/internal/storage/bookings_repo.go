@@ -256,3 +256,119 @@ func (r *BookingsRepo) SubmitRating(ctx context.Context, bookingID, clientID str
 	}
 	return r.Get(ctx, bookingID)
 }
+
+// FindDueForReminder returns active bookings whose slot starts within [windowStart, windowEnd)
+// and that haven't had a reminder attempted yet (FEAT-04, FR-21) — tracked via the
+// booking_reminders table (see migrations/00003 for why this is a separate table rather than a
+// reminder_sent_at column on bookings). The caller (the reminder worker) computes
+// windowStart/windowEnd as now()+24h-interval / now()+24h so consecutive ticks neither skip nor
+// double-send a booking.
+func (r *BookingsRepo) FindDueForReminder(ctx context.Context, windowStart, windowEnd time.Time) ([]domain.Booking, error) {
+	q := bookingSelect + `
+		LEFT JOIN booking_reminders br ON br.booking_id = b.id
+		WHERE b.status = 'active' AND br.booking_id IS NULL
+		AND s.start_at >= $1 AND s.start_at < $2`
+	rows, err := r.pool.Query(ctx, q, windowStart, windowEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+// MarkReminderSent records that a reminder was attempted, regardless of push delivery success
+// (FEAT-04) — a dead/unreachable subscription must not cause the worker to retry a booking
+// forever; cleanup of dead subscriptions is PushService/PushSender's job (404/410 handling), not
+// this method's. ON CONFLICT DO NOTHING makes this idempotent if ever called twice for the same
+// booking.
+func (r *BookingsRepo) MarkReminderSent(ctx context.Context, bookingID string) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO booking_reminders (booking_id) VALUES ($1) ON CONFLICT DO NOTHING`, bookingID)
+	return err
+}
+
+// ForceCancel is a dev-only administrative operation (FEAT-05, not part of api/) simulating a
+// studio-initiated slot cancellation (FR-17/18) end-to-end, since there is no owner/admin panel
+// in this delivery. It locks the slot row, flips it to cancelled, and cascades every still
+// active/late_cancel booking on it to cancelled_by_studio — all inside one transaction, so a
+// concurrent createBooking/cancelBooking on the same slot can't race with the cascade.
+// free_seats is deliberately left untouched: the whole slot is withdrawn, not incrementally
+// freed. Returns the bookings that were newly cancelled (with client_id/slot/program loaded) so
+// the caller can push-notify their owners after the transaction commits.
+func (r *BookingsRepo) ForceCancel(ctx context.Context, slotID, reason string) ([]domain.Booking, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op once Commit has succeeded
+
+	var status string
+	if err := tx.QueryRow(ctx, `SELECT status FROM slots WHERE id = $1 FOR UPDATE`, slotID).Scan(&status); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrSlotNotFound
+		}
+		return nil, err
+	}
+	if status == string(domain.SlotCancelled) {
+		return nil, domain.ErrSlotAlreadyCancelled
+	}
+
+	if _, err := tx.Exec(ctx, `UPDATE slots SET status = 'cancelled', cancellation_reason = $1 WHERE id = $2`, reason, slotID); err != nil {
+		return nil, err
+	}
+
+	const cascadeQ = `
+		UPDATE bookings SET status = 'cancelled_by_studio', cancelled_at = now()
+		WHERE slot_id = $1 AND status IN ('active', 'late_cancel')
+		RETURNING id`
+	rows, err := tx.Query(ctx, cascadeQ, slotID)
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	var affected []domain.Booking
+	if len(ids) > 0 {
+		bRows, err := tx.Query(ctx, bookingSelect+` WHERE b.id = ANY($1::uuid[])`, ids)
+		if err != nil {
+			return nil, err
+		}
+		for bRows.Next() {
+			b, err := scanBooking(bRows)
+			if err != nil {
+				bRows.Close()
+				return nil, err
+			}
+			affected = append(affected, b)
+		}
+		bRows.Close()
+		if err := bRows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return affected, nil
+}

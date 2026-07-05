@@ -8,6 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // FEAT-07: switched from the default generateSW strategy to injectManifest — generateSW
+      // only produces an offline precache with no hook point for a `push` event handler
+      // (LOGIC-004 needs the SW to actually show a system notification on push). srcDir/filename
+      // point at our own service worker; the precache manifest is still injected automatically.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       manifest: {
         name: 'Шеф-стол',
         short_name: 'Шеф-стол',

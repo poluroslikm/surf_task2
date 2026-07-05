@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { slotsApi } from '../../api/slotsApi'
 import { ScreenState } from '../../core/screenState'
 import { ApiRequestError, NetworkError, GENERIC_LOAD_NETWORK_ERROR, GENERIC_SERVER_ERROR } from '../../core/errors'
@@ -15,6 +15,9 @@ export function useSlotsScreen() {
   const [screen, setScreen] = useState<ScreenState<Slot[]>>(ScreenState.loading())
   const [appliedDateTo, setAppliedDateTo] = useState<string | undefined>(undefined)
   const [snack, setSnack] = useState<string | null>(null)
+  // FEAT-09: pure client-side filter over the already-loaded `content` list — no new request,
+  // not persisted (plain component state), reset whenever the screen unmounts/remounts.
+  const [searchQuery, setSearchQuery] = useState('')
 
   async function load(dateTo: string | undefined, isRefresh: boolean) {
     if (isRefresh) {
@@ -50,12 +53,32 @@ export function useSlotsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // FEAT-09: case-insensitive substring match against program/chef name, computed from whatever
+  // is currently in Content state — never triggers a request (LOGIC-003/listSlots untouched).
+  const filteredSlots = useMemo(() => {
+    if (screen.kind !== 'content') return []
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return screen.value
+    return screen.value.filter(
+      (slot) => slot.program.name.toLowerCase().includes(q) || slot.chef.name.toLowerCase().includes(q),
+    )
+  }, [screen, searchQuery])
+
   return {
     screen,
     appliedDateTo,
+    isFilterActive: appliedDateTo !== undefined,
     snack,
+    searchQuery,
+    setSearchQuery,
+    filteredSlots,
     refresh: () => void load(appliedDateTo, true),
     retryAfterError: () => void load(appliedDateTo, false),
+    // FEAT-08 (BS-001 "Применить"): sets the filter and re-triggers listSlots with date_to.
+    applyDateTo: (date: string) => {
+      setAppliedDateTo(date)
+      void load(date, false)
+    },
     resetDateFilter: () => {
       setAppliedDateTo(undefined)
       void load(undefined, false)

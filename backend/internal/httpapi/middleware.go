@@ -49,6 +49,23 @@ func ClientFromContext(ctx context.Context) (domain.Client, bool) {
 	return c, ok
 }
 
+// RequireInternalToken guards dev-only internal tooling endpoints (FEAT-05) — deliberately
+// separate from RequireAuth since this isn't a client session, just a header shared secret
+// (cfg.InternalToolsToken) compared against X-Internal-Token. A missing/mismatched token gets a
+// plain 401 (http.Error) — this route isn't part of api/, so it doesn't need to match the
+// client-facing Error JSON schema.
+func RequireInternalToken(token string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("X-Internal-Token") != token {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // CORS is a permissive dev-only CORS middleware: there's no fixed deployment origin yet (see
 // README "Переменные окружения"), so it reflects whatever Origin the browser sent instead of
 // hardcoding one. Must run before RequireAuth so preflight OPTIONS (sent by the browser ahead

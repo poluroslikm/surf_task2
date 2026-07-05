@@ -27,6 +27,14 @@ var (
 	// bookings_active_client_slot_uidx). No dedicated contract code exists for this — see
 	// httpapi/errors.go for the code chosen.
 	ErrDuplicateBooking = errors.New("client already has an active booking on this slot")
+
+	// Push domain (FEAT-03): registerPushSubscription validation failure — empty endpoint/keys
+	// or endpoint not an absolute URL. Maps to 400 bad_request, mirroring ErrInvalidRating.
+	ErrInvalidPushSubscription = errors.New("invalid push subscription")
+
+	// FEAT-05 (dev-only force-cancel, not part of api/): the slot targeted by force-cancel is
+	// already status='cancelled' — a second call must not double-process the cascade.
+	ErrSlotAlreadyCancelled = errors.New("slot already cancelled")
 )
 
 // ErrSlotFull carries the actual free-seats count for createBooking's 409 response

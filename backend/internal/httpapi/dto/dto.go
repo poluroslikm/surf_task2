@@ -121,3 +121,23 @@ type BookingSummary struct {
 type BookingListResponse struct {
 	Items []BookingSummary `json:"items"`
 }
+
+// PushSubscriptionKeys — push/models.yaml#/components/schemas/PushSubscriptionKeys.
+type PushSubscriptionKeys struct {
+	P256dh string `json:"p256dh"`
+	Auth   string `json:"auth"`
+}
+
+// PushSubscriptionRequest — push/models.yaml#/components/schemas/PushSubscription, as sent by
+// registerPushSubscription. Deliberately no id/client_id: those are server-assigned.
+type PushSubscriptionRequest struct {
+	Endpoint string               `json:"endpoint"`
+	Keys     PushSubscriptionKeys `json:"keys"`
+}
+
+// PushSubscriptionResponse — registerPushSubscription echoes back exactly the stored
+// PushSubscription shape (endpoint + keys), matching the request schema field-for-field.
+type PushSubscriptionResponse struct {
+	Endpoint string               `json:"endpoint"`
+	Keys     PushSubscriptionKeys `json:"keys"`
+}

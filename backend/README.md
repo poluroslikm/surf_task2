@@ -35,6 +35,20 @@
     диапазон `1–5`.
 - **BE-12 (частично)** — юнит-тесты `auth`/`slots` на сервисном слое (фейковые репозитории) +
   HTTP-тесты через `httptest` поверх реальных хендлеров/роутера.
+- **FEAT-01..05 (push-уведомления, FR-21/FR-22, BE-10)** — пятый домен контракта `api/push`
+  (`registerPushSubscription`, upsert по `endpoint`); `push_subscriptions` + `booking_reminders`
+  (см. «Отклонение от плана» ниже); VAPID-подписанная отправка (`SherClockHolmes/webpush-go`);
+  фоновый воркер напоминаний за 24ч (тикер 5 мин, окно `[now+24ч-interval, now+24ч)`,
+  `booking_reminders` защищает от дублей независимо от успеха доставки); dev-only
+  `POST /internal/slots/{slotId}/force-cancel` (заголовок `X-Internal-Token`, не часть `api/`) —
+  каскадно переводит слот и его активные брони в `cancelled`/`cancelled_by_studio` одной
+  транзакцией с `SELECT ... FOR UPDATE`, шлёт push после коммита.
+
+**Отклонение от плана.** `FEATURES_IMPLEMENTATION_PLAN.md` (FEAT-02) предполагал `ALTER TABLE
+bookings ADD COLUMN reminder_sent_at` — вместо этого отдельная таблица `booking_reminders`: роль
+`chef_stol` не владеет `bookings` (владелец — `postgres`) и не имеет `ALTER`, а суперпользовательского
+сеанса для `GRANT` в этом окружении нет. Отдельная таблица даёт ту же идемпотентность без требования
+владения.
 
 ## Не реализовано
 
@@ -43,11 +57,9 @@
   `internal/httpapi/dto/dto.go` написаны вручную по образцу `api/*/models.yaml` — контракт и код
   могут разойтись незаметно, сверяйте вручную при изменении `api/`.
 - **BE-03** — `sqlc` тоже не подключён; репозитории — обычный `pgx` с SQL-строками.
-- **BE-10** — push-инфраструктура (FR-21/FR-22): регистрация push-подписки не имеет эндпоинта в
-  контракте (открытый вопрос, см. `api/README.md`); ничего не реализовано.
-- **BE-12 (bookings)** — новый домен пока без автотестов, только живая ручная/скриптовая
-  проверка (см. ниже). Concurrency-тест для `createBooking` был прогнан вживую один раз, но не
-  оформлен как повторяемый Go-тест.
+- **BE-12 (bookings, push)** — домены `bookings` и `push` пока без автотестов, только живая
+  ручная/скриптовая проверка (см. ниже). Concurrency-тест для `createBooking` был прогнан вживую
+  один раз, но не оформлен как повторяемый Go-тест.
 - **BE-13** — k6/нагрузочное тестирование не начато.
 - **submitRating: success/`already_rated`** — проверены только по коду, не вживую: в seed-данных
   нет слота с `start_at` в прошлом, а фабриковать его вручную агент, писавший эту часть, не стал
@@ -77,8 +89,21 @@
   ровно 3×`201` и 5×`409 slot_full`, итоговый `free_seats = 0`, без ухода в минус и без
   оверселлинга. Тестовые брони отменены после проверки, слот возвращён к исходному состоянию.
 
+Дополнительно, для `push` (отдельный порт `:8083`, тестовый клиент `push-verify-agent@...`,
+данные удалены после проверки):
+
+- `registerPushSubscription` — реальная запись подтверждена в `push_subscriptions` (клиент,
+  endpoint, ключи совпадают с отправленными).
+- `POST /internal/slots/{slotId}/force-cancel` — создана тестовая бронь на реальном слоте, вызов
+  перевёл слот в `cancelled` (`free_seats` не тронут — вся вместимость слота снимается целиком,
+  не уменьшается на 1), связанную бронь — в `cancelled_by_studio` с заполненным `cancelled_at`;
+  повторный вызов на уже отменённый слот → `409`; запрос без верного `X-Internal-Token` → `401`.
+  Слот и бронь восстановлены после проверки.
+- Миграция `00003_push_and_reminders.sql` применена на реальной БД, схема (`push_subscriptions`,
+  `booking_reminders`) сверена вживую через `\d`.
+
 `go build ./...`, `go vet ./...`, `go test ./...` — чисто на текущем коде (auth+slots тесты
-проходят; bookings без автотестов, см. выше).
+проходят; bookings/push без автотестов, см. выше).
 
 ## Запуск локально
 
@@ -96,6 +121,10 @@ go run ./cmd/api
 | `DATABASE_URL` | да | — | DSN PostgreSQL |
 | `HTTP_ADDR` | нет | `:8080` | адрес HTTP-сервера |
 | `SESSION_TTL_HOURS` | нет | `720` (30 дней) | срок жизни bearer-токена |
+| `VAPID_PUBLIC_KEY` | да | — | публичный VAPID-ключ (должен совпадать с захардкоженным в `client/src/core/config.ts`) |
+| `VAPID_PRIVATE_KEY` | да | — | приватный VAPID-ключ для подписи push |
+| `VAPID_SUBJECT` | да | — | `mailto:`-адрес, требуемый спецификацией Web Push |
+| `INTERNAL_TOOLS_TOKEN` | да | — | секрет заголовка `X-Internal-Token` для dev-эндпоинта `/internal/*` |
 
 ## Эндпоинты
 
@@ -111,4 +140,6 @@ go run ./cmd/api
 | GET | `/bookings/{bookingId}` | `getBooking` | да |
 | POST | `/bookings/{bookingId}/cancel` | `cancelBooking` | да |
 | POST | `/bookings/{bookingId}/rating` | `submitRating` | да |
+| POST | `/push/subscriptions` | `registerPushSubscription` | да |
+| POST | `/internal/slots/{slotId}/force-cancel` | — (dev-only, не часть `api/`) | `X-Internal-Token` |
 | GET | `/healthz` | — | нет |

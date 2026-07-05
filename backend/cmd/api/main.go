@@ -13,6 +13,7 @@ import (
 	"github.com/chef-stol/backend/internal/httpapi"
 	"github.com/chef-stol/backend/internal/service"
 	"github.com/chef-stol/backend/internal/storage"
+	"github.com/chef-stol/backend/internal/worker"
 )
 
 func main() {
@@ -37,22 +38,32 @@ func main() {
 	authRepo := storage.NewAuthRepo(pool)
 	slotsRepo := storage.NewSlotsRepo(pool)
 	bookingsRepo := storage.NewBookingsRepo(pool)
+	pushRepo := storage.NewPushRepo(pool)
 
 	authSvc := service.NewAuthService(authRepo, cfg.SessionTTL)
 	slotsSvc := service.NewSlotsService(slotsRepo)
 	bookingsSvc := service.NewBookingsService(bookingsRepo)
+	pushSender := service.NewPushSender(cfg.VAPIDPublicKey, cfg.VAPIDPrivateKey, cfg.VAPIDSubject)
+	pushSvc := service.NewPushService(pushRepo, pushSender, logger)
+	internalSvc := service.NewInternalService(bookingsRepo, pushSvc)
 
 	router := httpapi.NewRouter(httpapi.Handlers{
 		Auth:     httpapi.NewAuthHandler(authSvc),
 		Slots:    httpapi.NewSlotsHandler(slotsSvc),
 		Bookings: httpapi.NewBookingsHandler(bookingsSvc),
-	}, authSvc, logger)
+		Push:     httpapi.NewPushHandler(pushSvc),
+		Internal: httpapi.NewInternalHandler(internalSvc),
+	}, authSvc, cfg.InternalToolsToken, logger)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+
+	// FEAT-04 (FR-21, Should priority): 24h-ahead booking reminders. Runs until ctx is
+	// cancelled (same shutdown signal as the HTTP server).
+	go worker.RunReminderWorker(ctx, bookingsRepo, pushSvc, 5*time.Minute, logger)
 
 	go func() {
 		logger.Info("http server starting", "addr", cfg.HTTPAddr)

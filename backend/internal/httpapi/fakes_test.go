@@ -112,5 +112,5 @@ func newTestRouter(authRepo *fakeAuthRepo, slotsRepo *fakeSlotsRepo) http.Handle
 	slotsSvc := service.NewSlotsService(slotsRepo)
 	h := Handlers{Auth: NewAuthHandler(authSvc), Slots: NewSlotsHandler(slotsSvc)}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewRouter(h, authSvc, logger)
+	return NewRouter(h, authSvc, "test-internal-token", logger)
 }

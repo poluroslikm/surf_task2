@@ -86,6 +86,8 @@ func mapDomainError(w http.ResponseWriter, err error) {
 		// mirrors the ErrEmailTaken precedent above (409 + the closest existing code,
 		// "bad_request") rather than inventing an undocumented machine code.
 		writeError(w, http.StatusConflict, CodeBadRequest, "У вас уже есть активная запись на этот слот.")
+	case errors.Is(err, domain.ErrInvalidPushSubscription):
+		writeError(w, http.StatusBadRequest, CodeBadRequest, "Неверные параметры запроса. Проверьте корректность переданных значений.")
 	default:
 		writeError(w, http.StatusInternalServerError, CodeInternalError, "Что-то пошло не так. Попробуйте ещё раз позже.")
 	}
