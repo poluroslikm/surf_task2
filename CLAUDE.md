@@ -66,10 +66,13 @@ consulting or running the reference example, not part of this repo's own build.
 
 ## API contract structure (`api/`)
 
-Split by domain, not one file — see `api/README.md` for the full rationale. Only 4 domains exist on
-purpose: **auth**, **slots**, **bookings**, **common**. There is no `profile` domain (no client
-profile view/edit beyond login) and no standalone `programs`/`chefs` domain — `Program` and `Chef` are
-read-only objects nested inside `Slot`, not independently listable resources. Rating is a sub-path
+Split by domain, not one file — see `api/README.md` for the full rationale. 5 domains exist on
+purpose: **auth**, **slots**, **bookings**, **push**, **common**. There is no `profile` domain (no
+client profile view/edit beyond login) and no standalone `programs`/`chefs` domain — `Program` and
+`Chef` are read-only objects nested inside `Slot`, not independently listable resources. `push`
+(added later, closing the gap noted below) is a real resource with its own lifecycle — a client
+registers a Web Push subscription — not a read-only projection, same rationale that keeps
+`bookings` its own domain instead of a `slots` sub-path. Rating is a sub-path
 of bookings (`POST /bookings/{bookingId}/rating`), not its own resource.
 
 ## Domain invariants that require cross-file synthesis
@@ -104,10 +107,6 @@ reading `2-requirements/`, `4-design/data-model.md`, and `api/*/models.yaml` tog
 Documented but unresolved — don't silently invent an answer, they need an explicit decision that
 also updates `api/`:
 
-- **Push subscription registration has no endpoint** in the current contract, even though FR-22
-  (push on studio-initiated cancellation) is a **Must** requirement. See
-  `5-mobile-app-spec/09_Логики/LOGIC-004_Запрос-push-разрешения.md` and `api/README.md` →
-  "Открытые вопросы, влияющие на контракт".
 - **Equipment rental pricing** (`rental_price`) is not part of the contract — mentioned as a possible
   backend field but no FR/US defines how it would affect `price_total`.
 - `createBooking` has no documented `422 slot_started` response (unlike `cancelBooking` and

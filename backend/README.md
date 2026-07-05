@@ -1,6 +1,6 @@
 # Шеф-стол — backend (Go)
 
-Реализация REST API по контракту `../api/{auth,slots,bookings,common}` и плану
+Реализация REST API по контракту `../api/{auth,slots,bookings,push,common}` и плану
 `../6-development/BE_IMPLEMENTATION_PLAN.md`.
 
 ## Реализовано

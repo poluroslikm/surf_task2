@@ -1,6 +1,6 @@
 # Шеф-стол — клиент (React + TypeScript + Vite)
 
-Реализация по `../6-development/FE_IMPLEMENTATION_PLAN.md`, контракту `../api/{auth,slots,common}`
+Реализация по `../6-development/FE_IMPLEMENTATION_PLAN.md`, контракту `../api/{auth,slots,bookings,push,common}`
 и бэкенду `../backend/`.
 
 > **Смена стека.** Изначально клиент писался на Kotlin Compose Multiplatform (wasmJs). После
