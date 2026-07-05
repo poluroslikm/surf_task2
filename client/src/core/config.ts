@@ -6,4 +6,4 @@ export const API_BASE_URL = 'http://localhost:8080'
 // in 6-development/FEATURES_IMPLEMENTATION_PLAN.md). Hardcoded like API_BASE_URL above — this
 // project doesn't use client-side .env — and must match the private key the backend signs with.
 // Not a secret: VAPID public keys are meant to be exposed to the client by design.
-export const VAPID_PUBLIC_KEY = 'BNRfUCr1tB3LU_3srxaba4oyZVSt06aWZeqUIVo656tXsPpJ_6bzD00gkn9J16i_KAkcwooQE1w5LYlxE6xuA4M'
+export const VAPID_PUBLIC_KEY = 'BI_GG7M7ixlJflnMuhL-dM2xgmH7k_SCB2TwEb3NhnVcaL37mmL1ibRWp6F4sxU4cYw-563a8fsG-qEooA31dSg'
