@@ -114,3 +114,96 @@ func newTestRouter(authRepo *fakeAuthRepo, slotsRepo *fakeSlotsRepo) http.Handle
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return NewRouter(h, authSvc, "test-internal-token", logger)
 }
+
+// fakeBookingsRepo is a map-backed stand-in for service.BookingsRepo. Get/List/Cancel/
+// SubmitRating enforce per-client ownership by checking the stored booking's ClientID, mirroring
+// internal/storage/bookings_repo.go's row-level ownership checks (WHERE b.client_id = $1 /
+// bookingClientID != clientID -> ErrForbidden). Create/Cancel/SubmitRating additionally return
+// whatever canned error a test configures, standing in for the SQL-layer business rules (seat
+// CAS, 24h cancel boundary, rating eligibility) that this fake does not reimplement.
+type fakeBookingsRepo struct {
+	bookings map[string]domain.Booking
+
+	createResult domain.Booking
+	createErr    error
+
+	cancelResult domain.Booking
+	cancelErr    error
+
+	ratingResult domain.Booking
+	ratingErr    error
+}
+
+func newFakeBookingsRepo() *fakeBookingsRepo {
+	return &fakeBookingsRepo{bookings: make(map[string]domain.Booking)}
+}
+
+func (f *fakeBookingsRepo) Create(ctx context.Context, clientID, slotID string, equipment domain.EquipmentChoice) (domain.Booking, error) {
+	if f.createErr != nil {
+		return domain.Booking{}, f.createErr
+	}
+	return f.createResult, nil
+}
+
+func (f *fakeBookingsRepo) List(ctx context.Context, clientID string) ([]domain.Booking, error) {
+	var out []domain.Booking
+	for _, b := range f.bookings {
+		if b.ClientID == clientID {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeBookingsRepo) Get(ctx context.Context, id string) (domain.Booking, error) {
+	b, ok := f.bookings[id]
+	if !ok {
+		return domain.Booking{}, domain.ErrBookingNotFound
+	}
+	return b, nil
+}
+
+func (f *fakeBookingsRepo) Cancel(ctx context.Context, bookingID, clientID string) (domain.Booking, error) {
+	b, ok := f.bookings[bookingID]
+	if !ok {
+		return domain.Booking{}, domain.ErrBookingNotFound
+	}
+	if b.ClientID != clientID {
+		return domain.Booking{}, domain.ErrForbidden
+	}
+	if f.cancelErr != nil {
+		return domain.Booking{}, f.cancelErr
+	}
+	return f.cancelResult, nil
+}
+
+func (f *fakeBookingsRepo) SubmitRating(ctx context.Context, bookingID, clientID string, stars int, comment *string) (domain.Booking, error) {
+	b, ok := f.bookings[bookingID]
+	if !ok {
+		return domain.Booking{}, domain.ErrBookingNotFound
+	}
+	if b.ClientID != clientID {
+		return domain.Booking{}, domain.ErrForbidden
+	}
+	if f.ratingErr != nil {
+		return domain.Booking{}, f.ratingErr
+	}
+	// Mirrors bookings_repo.go's SubmitRating, which validates the 1-5 stars range only in the
+	// SQL layer (see report finding: nothing in the handler/DTO validates this beforehand).
+	if stars < 1 || stars > 5 {
+		return domain.Booking{}, domain.ErrInvalidRating
+	}
+	return f.ratingResult, nil
+}
+
+// newTestRouterWithBookings extends newTestRouter with a wired BookingsHandler. Added as a
+// separate function (rather than changing newTestRouter's signature) so the existing auth/slots
+// handler tests calling newTestRouter are untouched.
+func newTestRouterWithBookings(authRepo *fakeAuthRepo, slotsRepo *fakeSlotsRepo, bookingsRepo *fakeBookingsRepo) http.Handler {
+	authSvc := service.NewAuthService(authRepo, time.Hour)
+	slotsSvc := service.NewSlotsService(slotsRepo)
+	bookingsSvc := service.NewBookingsService(bookingsRepo)
+	h := Handlers{Auth: NewAuthHandler(authSvc), Slots: NewSlotsHandler(slotsSvc), Bookings: NewBookingsHandler(bookingsSvc)}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	return NewRouter(h, authSvc, "test-internal-token", logger)
+}

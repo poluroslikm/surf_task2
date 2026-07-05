@@ -20,7 +20,7 @@
 - [x] [BE-09. Реализовать оценку шефа](#be-09-реализовать-оценку-шефа) — success/already_rated пути не проверены вживую (нет прошедшего слота в seed-данных), только `not_ratable`-отказы
 - [x] [BE-10. Закрыть открытый вопрос push-инфраструктуры (FR-21/FR-22)](#be-10-закрыть-открытый-вопрос-push-инфраструктуры-fr-21fr-22) — реализовано как FEAT-01..05 в `FEATURES_IMPLEMENTATION_PLAN.md`, проверено вживую (см. `backend/README.md`)
 - [x] [BE-11. Довести контрактные ошибки и валидацию](#be-11-довести-контрактные-ошибки-и-валидацию) — все коды `common/models.yaml` реализованы; `ErrDuplicateBooking` (нет своей записи в контракте) сознательно сведён к `409 bad_request` по аналогии с `ErrEmailTaken`
-- [ ] [BE-12. Добавить полный набор Go-тестов](#be-12-добавить-полный-набор-go-тестов) — auth/slots покрыты юнит- и HTTP-тестами; bookings пока без автотестов (проверен только вручную вживую), общий concurrency-тест (BE-13) не автоматизирован
+- [x] [BE-12. Добавить полный набор Go-тестов](#be-12-добавить-полный-набор-go-тестов) — auth/slots/bookings/push теперь все покрыты юнит- и HTTP-тестами (два субагента, см. `promt/тесты.md`); repository-интеграционных тестов на реальной Postgres по-прежнему только один (см. ниже); concurrency-тест (BE-13) не автоматизирован
 - [ ] [BE-13. Нагрузочное и concurrency-тестирование](#be-13-нагрузочное-и-concurrency-тестирование)
 - [ ] [BE-14. Подготовить локальный запуск и документацию разработчика](#be-14-подготовить-локальный-запуск-и-документацию-разработчика)
 - [ ] [BE-15. Финальная проверка готовности BE](#be-15-финальная-проверка-готовности-be)
@@ -335,18 +335,28 @@
 - Contract-тесты по каждому `operationId` проверяют основные success/error статусы из соответствующего `api.yaml`.
 - Нет ни одного machine code, отсутствующего в `common/models.yaml`.
 
-### BE-12. Добавить полный набор Go-тестов
+### BE-12. Добавить полный набор Go-тестов ✅ (без testcontainers/race)
 
-Сделать:
-- Unit-тесты домена: расчёт `free_cancellation_until`, правило 24 часов на границах, правило
-  доступности оценки, hashing пароля.
-- Repository integration-тесты на реальной PostgreSQL (testcontainers-go).
-- HTTP integration-тесты на все endpoints.
-- Race/concurrency-тесты для `createBooking`/`cancelBooking`.
+Сделано (промт «с помощью саб агентов сгенерируй тест-кейсы и найди баги», `promt/тесты.md`) —
+два субагента в изолированных worktree, построчно проверены и слиты вручную:
+- `internal/service/bookings_service_test.go`, `internal/httpapi/bookings_handler_test.go` —
+  сервисный и HTTP-слой домена `bookings` (create/list/get/cancel/rating, все документированные
+  статусы и коды ошибок, 403-не-404 для чужой записи — NFR-8).
+- `internal/service/push_service_test.go`, `internal/httpapi/push_handler_test.go`,
+  `internal/httpapi/internal_handler_test.go`, `internal/worker/reminder_test.go` — домен `push`
+  целиком (регистрация/upsert, fan-out на несколько подписок с частичным отказом, dev-эндпоинт
+  force-cancel, воркер напоминаний — включая регрессионный тест на переживание пропущенного тика).
+- `internal/storage/bookings_repo_reminder_test.go` — единственный интеграционный тест на
+  реальной Postgres (не testcontainers — просто читает `DATABASE_URL`, пропускается, если не
+  задан), проверяет именно тот баг воркера, что был найден ревью (см. BE-10/FEATURES_IMPLEMENTATION_PLAN.md).
+
+Не сделано: `testcontainers-go` не подключён (единственный DB-тест — вручную поднятый
+`DATABASE_URL`), `go test -race` не прогонялся отдельно.
 
 Готово, когда:
-- `go test ./...` стабильно проходит.
-- `go test -race ./...` проходит (или дорогие concurrency-сьюты вынесены отдельной командой).
+- `go test ./...` стабильно проходит. ✅
+- `go test -race ./...` проходит (или дорогие concurrency-сьюты вынесены отдельной командой). Не
+  проверено.
 
 ### BE-13. Нагрузочное и concurrency-тестирование
 
